@@ -1,5 +1,5 @@
 ![banner](https://github.com/arnav123098/sonoro/blob/main/banner.png)
-Sonoro lets you talk to your favorite game or anime characters. You can also make a custom character on your own. \
+Sonoro lets you talk to your favorite game or anime characters. You can also make a custom character on your own.
 
 #### Things you need
 - 3D model (vrm)
