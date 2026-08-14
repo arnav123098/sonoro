@@ -18,6 +18,8 @@ Clone the repo
 Install Python packages
 ```
   cd sonoro/engine
+  py -m venv .venv # create a virtual environment
+  .venv/Scripts/activate # activate the venv
   pip install -r requirements.txt
 ```
 
@@ -29,7 +31,7 @@ From the project root, run the commands -
 ```
 
 ## Usage (in development mode)
-Open up two terminals in project root and run.
+Open up two terminals in project root, activate venv and run.
 ```
   # in terminal 1
   cd sonoro/engine
