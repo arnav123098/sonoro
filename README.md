@@ -1,9 +1,4 @@
 ![banner](https://github.com/arnav123098/sonoro/blob/main/banner.png)
----
-
-## Sonoro TUI and SDK (on the way)
-Soon, you'll be able to use sonoro externally as a tool for letting your ai use a 3D model, voice and web search/scrape, song playing etc.
-You'll able to talk with your characters using a cli.
 
 ---
 Sonoro lets you talk to your favorite game or anime characters. You can also make a custom character on your own.
@@ -63,6 +58,10 @@ As an example, I have Yinlin from Wuthering Waves in my sonoro.
 
 ## ⚠️ Alpha software
 Sonoro is currently in early development. APIs, configuration, installation steps, and features may change frequently. Things will probably break.
+
+## Sonoro TUI and SDK (on the way)
+Soon, you'll be able to use sonoro externally as a tool for letting your ai use a 3D model, voice and web search/scrape, song playing etc.
+You'll able to talk with your characters using a cli.
 
 ## TODOS
 - [ ] music player tool
