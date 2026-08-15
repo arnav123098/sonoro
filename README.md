@@ -58,7 +58,7 @@ As an example, I have Yinlin from Wuthering Waves in my sonoro.
 ## ⚠️ Alpha software
 Sonoro is currently in early development. APIs, configuration, installation steps, and features may change frequently. Things will probably break.
 
-## Sonoro SDK
+## Sonoro SDK (coming soon!)
 You can use sonoro externally as a tool for letting your ai use a 3D model, voice and web search/scrape, song playing etc.
 
 ## TODOS
