@@ -59,6 +59,7 @@ As an example, I have Yinlin from Wuthering Waves in my sonoro.
 Sonoro is currently in early development. APIs, configuration, installation steps, and features may change frequently. Things will probably break.
 
 ## TODOS
+- [ ] music player tool
 - [ ] gltf support (if i won't be a sloth, that is)
 - [ ] convo examples
 - [ ] reference voice and better tts (potentially F5 TTS)
