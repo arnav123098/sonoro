@@ -65,5 +65,5 @@ Sonoro is currently in early development. APIs, configuration, installation step
 - [ ] reference voice and better tts (potentially F5 TTS)
 - [ ] streamed response and chunk-wise tts generation to mask latency 
 - [ ] handle guardrails
-
+- [ ] serve frontend using starlette
 ---
