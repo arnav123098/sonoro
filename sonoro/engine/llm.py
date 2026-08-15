@@ -99,10 +99,15 @@ class LLM:
             }
         ]
 
-        response = self.client.chat.completions.create(
+        args = dict(
             model=self.model,
-            messages=context
+            messages=context,
         )
+
+        if "qwen" in self.model:
+            args["reasoning_effort"] = "none"
+
+        response = self.client.chat.completions.create(**args)
         desc = response.choices[0].message.content
 
         return desc
@@ -117,14 +122,21 @@ class LLM:
         }
         context = context[:-1] + [info] + [context[-1]]
         # print('info: ', info)
-        
-        response = self.client.chat.completions.create(
+
+        args = dict(
             model=self.model,
-            messages=context
+            messages=context,
         )
+
+        if "qwen" in self.model:
+            args["reasoning_effort"] = "none"
+        
+        
+        response = self.client.chat.completions.create(**args)
 
         res = response.choices[0].message.content
         res = res.strip('```').strip('json')
+        print('res: ', res)
 
         self.context.make_context(res, is_llm=True)
 
@@ -142,22 +154,29 @@ class LLM:
 
         print(f'summarizing conversation...')
 
-        response = self.client.chat.completions.create(
+        context = [
+            {
+                'role': 'system',
+                'content': summarizer_inst
+            },
+            {
+                'role': 'user',
+                'content': json.dumps({
+                    'convo': convo,
+                    'existing_summary': self.context.recent
+                }, indent=2)
+            }
+        ]
+
+        args = dict(
             model=self.model,
-            messages=[
-                {
-                    'role': 'system',
-                    'content': summarizer_inst
-                },
-                {
-                    'role': 'user',
-                    'content': json.dumps({
-                        'convo': convo,
-                        'existing_summary': self.context.recent
-                    }, indent=2)
-                }
-            ]
+            messages=context,
         )
+
+        if "qwen" in self.model:
+            args["reasoning_effort"] = "none"
+
+        response = self.client.chat.completions.create(**args)
 
         res = response.choices[0].message.content
         res = res.strip('```').strip('json')
