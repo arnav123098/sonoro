@@ -61,7 +61,7 @@ Sonoro is currently in early development. APIs, configuration, installation step
 
 ## Sonoro TUI and SDK (on the way)
 Soon, you'll be able to use sonoro externally as a tool for letting your ai use a 3D model, voice and web search/scrape, song playing etc.
-You'll able to talk with your characters using a cli.
+A terminal interface is in the making too.
 
 ## TODOS
 - [ ] music player tool
