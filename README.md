@@ -64,11 +64,11 @@ Soon, you'll be able to use sonoro externally as a tool for letting your ai use 
 A terminal interface is in the making too.
 
 ## TODOS
-- [ ] music player tool
-- [ ] gltf support (if i won't be a sloth, that is)
-- [ ] convo examples
-- [ ] reference voice and better tts (potentially F5 TTS)
-- [ ] streamed response and chunk-wise tts generation to mask latency 
+- [x] music player tool
 - [ ] handle guardrails
+- [ ] convo examples
+- [ ] streamed response and chunk-wise tts generation to mask latency
+- [ ] gltf support (if i won't be a sloth, that is)
+- [ ] reference voice and better tts (potentially F5 TTS)
 - [ ] serve frontend using starlette
 ---
