@@ -64,7 +64,7 @@ Soon, you'll be able to use sonoro externally as a tool for letting your ai use 
 A terminal interface is in the making too.
 
 ## TODOS
-- [x] music player tool
+- [x] music player tool (not in the repo version for now)
 - [ ] handle guardrails
 - [ ] convo examples
 - [ ] streamed response and chunk-wise tts generation to mask latency
