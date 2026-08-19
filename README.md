@@ -49,6 +49,8 @@ For starters, you can try chatting with A-chan, the default character.
 You have to use your own API keys for the providers you'll be using for LLM, STT, TTS (only Kyutai Pocket TTS works for now) and for Tavily and ScraperAPI for web search and scraping tool.
 Personally, I've tested it with Groq (free tier btw).
 
+Recommended LLM for best experience: Llama 70B or a Qwen 27B
+
 Or create a directory for your character in project/characters and get the models and voicelines in there.
 (ps: i'll make a guide soon! i promise...)
 
