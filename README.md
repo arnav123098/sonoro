@@ -68,9 +68,8 @@ A terminal interface is in the making too.
 ## TODOS
 - [x] music player tool (not in the repo version for now)
 - [x] handle guardrails (marking complete cuz i haven't seen it break on anything for now; didn't test Llama 70B though)
-- [ ] convo examples
 - [ ] settings ui
-- [ ] better character maker interface
+- [ ] better character maker interface + convo examples
 - [ ] streamed response and chunk-wise tts generation to mask latency
 - [ ] gltf support (if i won't be a sloth, that is)
 - [ ] reference voice and better tts (potentially F5 TTS)
