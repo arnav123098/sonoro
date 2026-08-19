@@ -67,6 +67,7 @@ A terminal interface is in the making too.
 - [x] music player tool (not in the repo version for now)
 - [ ] handle guardrails
 - [ ] convo examples
+- [ ] better character maker interface
 - [ ] streamed response and chunk-wise tts generation to mask latency
 - [ ] gltf support (if i won't be a sloth, that is)
 - [ ] reference voice and better tts (potentially F5 TTS)
