@@ -72,7 +72,6 @@ A terminal interface is in the making too.
 - [ ] settings ui
 - [ ] better character maker interface + convo examples
 - [ ] streamed response and chunk-wise tts generation to mask latency
-- [ ] gltf support (if i won't be a sloth, that is)
 - [ ] reference voice and better tts (potentially F5 TTS)
 - [ ] serve frontend using starlette
 ---
