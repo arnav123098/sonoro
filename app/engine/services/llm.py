@@ -141,21 +141,20 @@ class LLM:
         if "qwen" in self.model:
             args["reasoning_effort"] = "none"
         
-
         try:
             response = self.client.chat.completions.create(**args)
-        except openai.APIStatusError:
+        except OpenAI.APIStatusError:
             return {
                 "message": "You've probably hit your rate limit!"
             }
 
         res = response.choices[0].message.content
         res = res.strip('```').strip('json')
-        print('raw_response: ', res)
+
+        if self.context.interface_type == 'webui': print('raw_response: ', res)
 
         self.context.make_context(res, is_llm=True)
 
-        # print('raw_res: ', res)
         return json.loads(res)
 
     def summarize_context(self, upto=20):
@@ -167,7 +166,7 @@ class LLM:
 
         if not convo: return
 
-        print(f'summarizing conversation...')
+        print(f'[memory] summarizing conversation...')
 
         context = [
             {
@@ -204,7 +203,7 @@ class LLM:
     def save_mem(self):
         if not self.context.curr_character or not self.memory: return
 
-        print(f"saving memory for {self.context.curr_character}...")
+        print(f"[memory] saving memory for {self.context.curr_character}...")
         self.summarize_context(0)
 
         if self.context.recent:

@@ -2,17 +2,20 @@ from pocket_tts import TTSModel
 from gradio_client import Client, handle_file
 import scipy.io.wavfile
 import io
-from data import Data
 
 class TTS:
-    def __init__(self):
+    def __init__(self, root):
         self.tts_provider = None
         self.model = None
         self.tts = None
 
         self.exp_to_voice = None
+        self.is_tts = False
+
+        self.root = root
 
     def make_client(self, config):
+        if not self.is_tts: return
         self.tts_provider = config.get('tts', {}).get('provider')
 
         if self.tts_provider == 'Kyutai Pocket TTS':
@@ -27,7 +30,7 @@ class TTS:
         exp_to_voice = {exp: voice_path or neutral for exp, voice_path in config['expression_to_voice'].items()}
 
         self.exp_to_voice = {
-            exp: (Data.dir / 'characters' / config['dir'] / 'voicelines' / voice_path)
+            exp: (self.root / 'characters' / config['name'] / 'voicelines' / voice_path)
             for exp, voice_path in
             exp_to_voice.items()
         }

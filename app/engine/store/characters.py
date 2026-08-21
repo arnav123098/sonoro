@@ -1,13 +1,18 @@
 from pathlib import Path
 from pydantic import BaseModel, ValidationError
 
+class ThemeConfig(BaseModel):
+    chat_background: str | None = None
+    primary_color: str | None = None
+    secondary_color: str | None = None
+
 class CharacterConfig(BaseModel):
     name: str
     description: str | None = None
     background_lore: str | None = None
 
     pfp: str | None = None
-    chat_background: str | None = None
+    theme: ThemeConfig  = ThemeConfig()
 
     vrm_model: str | None = None
 
@@ -26,7 +31,7 @@ class CharacterStore:
 
     def list_characters(self) -> dict:
         return {
-            name: self.get_config(name).get('pfp')
+            name: self.get_config(name).model_dump().get('pfp')
             for name in
             [f.name for f in (self.dir).iterdir() if f.is_dir()]
         } # {name: pfp...}

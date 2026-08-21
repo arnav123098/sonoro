@@ -38,7 +38,7 @@ class UserStore:
             try:
                 config = UserConfig.model_validate(config)
             except ValidationError as e:
-                return {'status': 1, 'message': f'Exception while updating config: {e}'}
+                return {'status': 1, 'message': f'Exception while updating config: {e}', 'config': self.config}
 
             self.dir.mkdir(parents=True, exist_ok=True)
 
@@ -47,4 +47,4 @@ class UserStore:
 
             self.config = config
 
-            return {'status': 0, 'message': f'Config saved successfully!'}
+            return {'status': 0, 'message': f'Config saved successfully!', 'config': config}

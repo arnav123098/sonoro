@@ -6,6 +6,7 @@ class MusicPlayer:
     ydl_opts = {
         'format': 'bestaudio/best',
         'quiet': True,
+        'no_warnings': True,
         'extractor_args': {
             'youtube': {
                 'player_client': ['android'],
@@ -18,14 +19,16 @@ class MusicPlayer:
         self.player = None
 
     def play(self, query):
-        print("Extracting stream URL...")
+        print(f"Searching {query}...")
 
         with YoutubeDL(MusicPlayer.ydl_opts) as ydl:
-            info = ydl.extract_info(f"ytsearch1:{query}", download=False)
+            info = ydl.extract_info(f"ytsearch1:{query}", download=False, )
             stream_url = info['entries'][0]['url']
             title = info['entries'][0]['title']
 
         print(f"Now playing {title}...")
+        
+        self.stop()
 
         self.player = subprocess.Popen([
             MusicPlayer.player_path,
@@ -38,8 +41,9 @@ class MusicPlayer:
         return {'event_name': 'playing song', 'content': f"Now playing {title}..."}
 
     def stop(self):
-        self.player.terminate()
-        self.player = None
+        if self.player is not None:
+            self.player.terminate()
+            self.player = None
 
         return {'event_name': 'stopped song', 'content': 'stopped the current song'}
 
