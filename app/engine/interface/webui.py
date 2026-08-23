@@ -92,7 +92,7 @@ class WebUI:
             print('tool_call_done: ', tool_call_res['event_name'])
             # print('received tool_call res: ', tool_call_res)
                     
-            await self.from_char(self.services.llm.get_response(tool_call_res)) # send result to llm
+            await self.from_char(self.services.llm.get_response(tool_call_res), sid) # send result to llm
 
         if action == 'interaction':
             if content.get('speak', True):
@@ -110,17 +110,15 @@ class WebUI:
         self.make_client(self.config)
         await self.sio.emit('loadConfig', self.config, to=sid)
 
-    async def handle_get_models(self, sid, *args):
-        self.services.llm.make_client(self.config)
-        self.services.stt.make_client(self.config)
+    async def handle_get_models(self, sid, model_type, config = None):
+        service = self.services.llm if model_type == 'llm' else self.services.stt
 
-        llm, stt = self.services.llm.client.models.list(), self.services.stt.client.models.list()
-        model_list = {
-            'llm': [m.id for m in llm.data if 'whisper' not in m.id],
-            'stt': [m.id for m in stt.data if 'whisper' in m.id]
-        }
+        service.make_client(config or self.config)
 
-        await self.sio.emit('listModels', model_list, to=sid)
+        models = self.services.llm.client.models.list().data
+        model_list = [m.id for m in models if 'whisper' not in m.id] if model_type == 'llm' else [m.id for m in models if 'whisper' in m.id]
+
+        await self.sio.emit('listModels', [model_list, model_type], to=sid)
 
     async def handle_get_characters(self, sid):
         character_list = {n: self.to_url((f'{n}/images/{p}' if p is not None else f'a-chan/images/pfp.png'), 'characters') for n, p in self.store.characters.list_characters().items()}
@@ -128,7 +126,12 @@ class WebUI:
         await self.sio.emit('listCharacters', character_list, to=sid)
 
     async def handle_get_character_data(self, sid, name, create=False):
-        await self.sio.emit('loadCharacterData', self.store.characters.get_character(name, create=create).model_dump(), to=sid)
+        character = self.store.characters.get_character(name, create=create)
+        if character is not None:
+            if character.config.theme.chat_background is not None:
+                chat_bg = self.to_url(f'images/{character.config.theme.chat_background}', 'characters')
+                character.config.theme.chat_background = chat_bg
+            await self.sio.emit('loadCharacterData', character.model_dump(), to=sid)
 
     async def handle_update_character(self, sid, name, updated_config):
         self.store.characters.write_config(name, updated_config) # TODO: handle toasters
@@ -139,33 +142,66 @@ class WebUI:
         await self.sio.emit('genDesc', self.services.llm.get_character_description(data, self.tools['web_search']), to=sid)
 
     async def handle_select_character(self, sid, name):
-        self.character = self.store.characters.get_config(name).model_dump()
+        self.character = self.store.characters.get_config(name)
+
+        if self.character.theme.chat_background is not None:
+            chat_bg = self.to_url(f'{self.character.name}/images/{self.character.theme.chat_background}', 'characters')
+            self.character.theme.chat_background = chat_bg
+
+        self.character = self.character.model_dump()
 
         self.services.llm.set_character(self.character)
         self.services.tts.set_character(self.character)
 
-        model_dir = self.store.character_dir / name / 'models'
-        rel = (model_dir / self.character['vrm_model']).relative_to(model_dir)
-        url = f"http://localhost:3000/characters/{name}/models/{rel.as_posix()}"
-
         await self.sio.emit('selectedCharacter', {
             'name': name,
-            'vrm_model': url,
+            'vrm_model': self.to_url(f"{name}/models/{self.character['vrm_model']}", 'characters'),
             'theme': self.character['theme']
         }, to=sid)
 
-    async def handle_get_animations(self, sid, *args):
-        animations = {}
-        for name, path in self.store.animations.paths.items():
-            rel = path.relative_to(self.store.root)
-            url = f"http://localhost:3000/{rel.as_posix()}"
+    async def handle_delete_character(self, sid, name):
+        self.store.characters.delete_character(name)
 
-            animations[name] = url
+    async def handle_get_animations(self, sid, *args):
+        animations = {
+            name: self.to_url(path, 'animations')
+            for name, path in self.store.animations.paths.items()
+        }
 
         await self.sio.emit('loadAnimations', {
             'animations': animations,
             'idle_animation': 'idle'
         }, to=sid)
+
+    async def handle_upload_assets(self, sid, character, assets):
+        formats = {
+            'models': ['vrm'],
+            'voicelines': ['wav', 'ogg'],
+            'images': ['png' , 'jpg', 'jpeg', 'webp']
+        }
+
+        to_upload = []
+
+        for a in assets:
+            ext = a['name'].strip().split('.')[-1]
+            a_type = None
+            for t, f in formats.items():
+                if ext in f:
+                    a_type = t
+                    break
+
+            if a_type is not None:
+                to_upload.append({
+                    'name': a['name'],
+                    'data': a['data'],
+                    'type': a_type
+                })
+
+        res = self.store.characters.upload_assets(character, to_upload)
+        await self.sio.emit('info', res, to=sid)
+
+    async def handle_delete_asset(self, sid, character, asset):
+        self.store.characters.delete_asset(character, asset)
 
     async def handle_connect(self, sid, *args):
         print(f'connected {sid}')
@@ -197,6 +233,9 @@ class WebUI:
         self.sio.on('getCharacters', self.handle_get_characters)
         self.sio.on('getCharacterData', self.handle_get_character_data)
         self.sio.on('updateCharacter', self.handle_update_character)
+        self.sio.on('deleteCharacter', self.handle_delete_character)
+        self.sio.on('uploadAssets', self.handle_upload_assets)
+        self.sio.on('deleteAsset', self.handle_delete_asset)
         self.sio.on('getGenDesc', self.handle_gen_desc)
 
         # interaction

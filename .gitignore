@@ -1,0 +1,26 @@
+# Python
+**/venv/
+**/.venv/
+**/__pycache__/
+*.pyc
+
+# Node / Bun
+**/node_modules/
+**/.svelte-kit/
+**/dist/
+**/.vite/
+
+# Environment / secrets
+config.json
+
+# characters (except default)
+characters/yinlin
+characters/shogun
+
+# OS
+.DS_Store
+Thumbs.db
+
+# misc
+sonoro.txt
+desktop.ini
