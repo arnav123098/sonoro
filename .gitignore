@@ -15,7 +15,6 @@ config.json
 
 # characters (except default)
 characters/yinlin
-characters/shogun
 
 # OS
 .DS_Store
@@ -24,4 +23,4 @@ Thumbs.db
 # misc
 sonoro.txt
 desktop.ini
-memory
+memory/
