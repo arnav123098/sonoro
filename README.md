@@ -69,10 +69,12 @@ Soon, you'll be able to use Sonoro externally as a tool for letting your ai use 
 - [x] music player tool
 - [x] tui
 - [x] settings, character maker interface
-- [ ] convo examples
-- [ ] streamed response and chunk-wise tts generation to mask latency
-- [ ] better tts (potentially F5 TTS)
+- [x] convo examples
+- [ ] chunk-wise tts generation to mask latency
 - [ ] character walks from screen to screen
 - [ ] ui design
 - [ ] sdk
+---
+## v1
+- [ ] better tts (potentially F5 TTS)
 ---

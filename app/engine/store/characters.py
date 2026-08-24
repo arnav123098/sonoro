@@ -19,6 +19,7 @@ class CharacterConfig(BaseModel):
     name: str
     description: str | None = None
     background_lore: str | None = None
+    convo_examples: list[list] | None = None
 
     pfp: str | None = None
     theme: ThemeConfig  = ThemeConfig()

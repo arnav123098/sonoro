@@ -127,11 +127,7 @@ class WebUI:
 
     async def handle_get_character_data(self, sid, name, create=False):
         character = self.store.characters.get_character(name, create=create)
-        if character is not None:
-            if character.config.theme.chat_background is not None:
-                chat_bg = self.to_url(f'images/{character.config.theme.chat_background}', 'characters')
-                character.config.theme.chat_background = chat_bg
-            await self.sio.emit('loadCharacterData', character.model_dump(), to=sid)
+        await self.sio.emit('loadCharacterData', character.model_dump(), to=sid)
 
     async def handle_update_character(self, sid, name, updated_config):
         self.store.characters.write_config(name, updated_config) # TODO: handle toasters

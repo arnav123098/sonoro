@@ -30,13 +30,13 @@
     <br><br>
 
     <h2>Chat Background</h2>
-    <select bind:value={config.theme.chat_background}>
+    <select bind:value={config.theme.chat_background}> <!--TODO: chat_background is currently a url. fix it.-->
         <option value={null}>default</option>
         {#each images as img}
             <option>{img}</option>
         {/each}
         {#if config.theme.chat_background}
-            <button onclick={() => deleteAsset(config.theme.chat_background, 'images')}>delete</button>
+            <button onclick={() => deleteAsset(config.pfp, 'images')}>delete</button>
         {/if}
     </select>
 
@@ -61,6 +61,17 @@
 
     <h1>Background Lore</h1>
     <textarea bind:value={config.background_lore}></textarea>
+
+    <h1>Convo Examples</h1>
+    <div>
+        {#each config.convo_examples as eg, i}
+            me: <input bind:value={eg[0]}>
+            {character}: <input bind:value = {eg[1]}>
+            <button onclick={() => deleteExample(i)}>delete</button>
+            <br>
+        {/each}
+    </div>
+    <button onclick={addExample}>add</button>
 
     <h1>Select Model</h1>
     <h2>Path</h2>
@@ -175,6 +186,15 @@
         config.description = data;
         genDescBoxVisible = false;
     };
+
+    const addExample = () => {
+        config.convo_examples = config.convo_examples || [];
+        config.convo_examples.push(['', '']);
+    }
+
+    const deleteExample = i => {
+        config.convo_examples.splice(i, 1);
+    }
 
     onMount(() => {
         globals.conn.on('loadCharacterData', handleLoadCharacterDir);

@@ -117,8 +117,8 @@ When tool_call execution is done, you'll get the result.
     }
     sys = sys.replace('<|tools|>', '\n-'.join(f'{t}: {m}' for t, m in tool_manuals.items()))
 
-    if examples:
-        sys = sys.replace('<|examples|>', 'Character Reply examples:\n' + '\n-'.join([f'[user message]: {u} | [this is how the character usually replies]: {r}' for u, r in examples.items()]))
+    if examples is not None:
+        sys = sys.replace('<|examples|>', 'Character reply examples in different cases according to their personality:\n' + '\n-'.join([f'[user]: {eg[0]} | [character]: {eg[1]}' for eg in examples]))
     return sys
 
 char_desc_inst = 'You will be provided with some info about a character either scraped from a webpage or raw text/markdown and you have to summarize it into accurate description of the character. First extract the character details and then describe the character. Try to stay concise and mention all the key details. Highlight the personality and behavior. Focus less on power. Other aspects that are game/show specific should be ignored. Only describe how the character would be as a person without losing any detail about the character. Do not mention relationships of the character with other characters as it should be independent of the game/show world and only describe the personality and behavior of the character which can be used to imitate them. Do not include name of any other character except the user only if needed. The user should be the most significant character.'
