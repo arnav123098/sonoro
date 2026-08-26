@@ -12,6 +12,8 @@ That's it!
 ## Installation (ps: it's not completed and i'm lazy so i'm not setting up serving web ui from python anytime too soon!)
 Make sure you have git and bun installed.
 
+For the music player tool, you need mpv installed at C:\Program Files\MPV Player\mpv.exe
+
 Clone the repo
 ```
   git clone https://github.com/arnav123098/sonoro project
@@ -74,7 +76,5 @@ Soon, you'll be able to use Sonoro externally as a tool for letting your ai use 
 - [ ] character walks from screen to screen
 - [ ] ui design
 - [ ] sdk
----
-## v1
 - [ ] better tts (potentially F5 TTS)
 ---
