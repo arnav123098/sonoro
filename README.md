@@ -31,19 +31,19 @@ Install Python packages
 Run bun install in sonoro/ui (for now, the web ui runs on port 5173).
 From the project root, run the commands -
 ```
-  cd sonoro/ui
+  cd sonoro/webui
   bun i # make sure you have bun installed
 ```
 
 ## Usage (in development mode)
 Open up two terminals in project root, activate venv and run.
 ```
-  # in terminal 1
+  # in terminal 1 with .venv activated
   cd sonoro/engine
   python -m chat
 
   # in terminal 2
-  cd sonoro/ui
+  cd sonoro/webui
   bun dev
 ```
 
