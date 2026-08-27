@@ -74,7 +74,9 @@ Soon, you'll be able to use Sonoro externally as a tool for letting your ai use 
 - [x] convo examples
 - [ ] chunk-wise tts generation to mask latency
 - [ ] character walks from screen to screen
-- [ ] ui design
 - [ ] sdk
+- [ ] refine character personality and behavior
+- [ ] ui design
 - [ ] better tts (potentially F5 TTS)
+- [ ] better memory system
 ---
