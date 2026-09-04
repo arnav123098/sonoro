@@ -28,13 +28,13 @@ class Memory:
 
     # for now don't have the delete option
 
-    def react(self, char_name:str, text, tags=None, semantic_topk=5, tag_topk=5):
+    def react(self, char_name:str, text, tags=None, topk=10):
         # DIRECT MATCHES
         collection = self._get_collection(char_name)
 
         r = collection.query(
             query_texts=[text],
-            n_results=semantic_topk,
+            n_results=topk,
             include=['distances', 'documents', 'metadatas']
         )
 
@@ -58,7 +58,7 @@ class Memory:
 
             r_tags = collection.get(
                 where=t_where,
-                limit=tag_topk
+                limit=topk
             )
 
             for i in r_tags['ids']:
@@ -74,7 +74,14 @@ class Memory:
 
         retrieved = collection.get(ids=list(res))
 
+        results = sorted(
+            zip(retrieved['ids'], retrieved['documents']),
+            key=lambda x: res[x[0]]['score'],
+            reverse=True
+        )
+        docs = [doc for _, doc in results][:topk]
+        
         return {
-            'memories': retrieved['documents'],
+            'memories': docs,
             'tags': list(set(tag for m in retrieved['metadatas'] for tag in m['tags'] if tag != 'none'))
         }

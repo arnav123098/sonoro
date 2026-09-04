@@ -12,6 +12,7 @@
 
 # Environment / secrets
 config.json
+**/recent.json
 
 # characters (except default)
 characters/yinlin

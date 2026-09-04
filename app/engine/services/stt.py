@@ -1,4 +1,5 @@
 from openai import OpenAI
+from io import BytesIO
 
 class STT:
     def __init__(self):
@@ -16,10 +17,17 @@ class STT:
         
         self.model = model if model and self.client else None
 
+    def list_models(self):
+        models = self.client.models.list().data
+        return [m.id for m in models if 'whisper' in m.id]
+
     def stt(self, data):
+        audio_file = BytesIO(data)
+        audio_file.name = "audio.wav"
+        
         transcript = self.client.audio.transcriptions.create(
             model=self.model,
-            file=data
+            file=audio_file
         )
         
         return transcript

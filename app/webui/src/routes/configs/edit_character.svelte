@@ -172,7 +172,7 @@
         voicelines = data.voicelines;
     };
 
-    const handleSaveCharacter = async () => config.name && config.expression_to_voice.neutral && globals.conn.emit('updateCharacter', config.name, config);
+    const handleSaveCharacter = async () => config.name && globals.conn.emit('updateCharacter', config.name, config);
     const handleSavedCharacterSuccess = async () => window.location.reload();
 
     const generateDesc = () => {

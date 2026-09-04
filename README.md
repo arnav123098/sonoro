@@ -72,11 +72,12 @@ Soon, you'll be able to use Sonoro externally as a tool for letting your ai use 
 - [x] tui
 - [x] settings, character maker interface
 - [x] convo examples
-- [ ] chunk-wise tts generation to mask latency
-- [ ] character walks from screen to screen
-- [ ] sdk
-- [ ] refine character personality and behavior
+- [x] chunk-wise tts generation to mask latency
+- [x] character walks from screen to screen
+- [x] sdk
+- [x] refine character personality and behavior
+- [x] better memory system
 - [ ] ui design
-- [ ] better tts (potentially F5 TTS)
-- [ ] better memory system
+- [ ] handling exceptions and edge cases (what a drag!)
+- [ ] finalize everything and create a release
 ---

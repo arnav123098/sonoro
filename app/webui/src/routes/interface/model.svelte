@@ -34,6 +34,8 @@
                 gltf => {
                     const vrm = gltf.userData.vrm;
                     model = vrm;
+                    model.scene.position.x = -1.5;
+                    model.scene.visible = false;
                     scene.add(vrm.scene);
 
                     vrm.scene.rotation.y = Math.PI;

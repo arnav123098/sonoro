@@ -1,20 +1,20 @@
 import inspect
 import asyncio
+import time
 
 class TUI:
-    def __init__(self, store, services, tools, make_client):
+    def __init__(self, store, services):
         self.services = services
-        self.tools = tools
-        self.make_client = make_client
+        self.tools = services.tools.tools
         self.store = store
+        self.tool_call = None
 
         self.menus = {
             'characters': self.characters_menu,
             'settings': self.settings_menu
         }
 
-        self.character = None
-        self.locked = False # only one character
+        self.session = None
 
         self.title = None
         self.colors = {
@@ -22,7 +22,15 @@ class TUI:
             'secondary': None
         }
 
+        # SONORO HANDLERS
+        self.on_from_user = None
+
+        self.ext_id = None
+
     def start(self):
+        print('starting tui...')
+        time.sleep(2)
+
         if self.title is None: print('Sonoro TUI')
         else:
             print(self.title)
@@ -34,19 +42,22 @@ class TUI:
         for menu in self.menus.keys():
             print(f'- {menu}')
 
-        self.make_client(self.store.user.get_config().model_dump())
+        self.services.make_client(self.store.user.get_config().model_dump())
 
         try:
             while True:
                 inp = input('>> ')
-                if inp == 'exit': return
+                if inp == 'exit': break
 
                 if inp not in self.menus:
                     print('invalid keyword entered')
                     continue
 
                 self.menus[inp]()
-        except KeyboardInterrupt: return
+        except KeyboardInterrupt: pass
+        finally:
+            self.services.server.should_exit = True
+            return
 
     def characters_menu(self):
         print()
@@ -74,15 +85,15 @@ class TUI:
         characters = {i: name for i, name in enumerate(self.store.characters.list_characters().keys())}
         print('\n'.join([f'{i}: {name}' for i, name in characters.items()]))
 
-        while self.character is None:
+        while self.session.character is None:
             try:
                 i = int(input('Select character by index: '))
                 if i == 'exit': return
 
-                self.character = characters[i]
-                print(f'Selected {self.character}')
+                self.session.character = characters[i]
+                print(f'Selected {self.session.character}')
 
-                char_config = self.store.characters.get_config(self.character)
+                char_config = self.store.characters.get_config(self.session.character)
 
                 self.colors['primary'] = char_config.theme.primary_color
                 self.colors['secondary'] = char_config.theme.secondary_color
@@ -92,50 +103,36 @@ class TUI:
             print()
         
     def chat_loop(self):
-        print(f'{self.character} joined the chat')
+        print(f'{self.session.character} joined the chat')
 
         try:
             while True:
                 message = input('^_^: ')
                 if message == 'exit': break
 
-                res = self.services.llm.get_response({
-                    'event_name': 'user_message',
-                    'content': message
-                })
+                data = {'type': 'text', 'content': message}
 
-                self.from_char(res)
+                asyncio.run(self.on_from_user({
+                    'event_name': 'user_message',
+                    'content': data
+                }))
 
         except KeyboardInterrupt: pass
         finally:
-            print(f'{self.character} went offline')
-            self.character = None
+            print(f'{self.session.character} went offline')
+            self.session.character = None
             self.services.llm.save_mem()
 
-    def from_char(self, res):
+    def to_ui(self, content):
+        print(f"{self.session.character}: {content['message']}")
+
+    async def default_from_char(self, res):
         action, content = res['action'], res['content']
 
-        if action == 'tool_call':
-            tool_name, function, args = content.get('tool'), content.get('function'), content.get('args')
-
-            tool_obj = self.tools.get(tool_name)
-            if tool_obj is not None:
-                fn = getattr(tool_obj, function, None)
-            else:
-                fn = None
-
-            if fn is not None:
-                tool_call_res = fn(**args)
-
-            if inspect.isawaitable(tool_call_res): tool_call_res = asyncio.run(tool_call_res)
-
-            print('tool_call_done: ', tool_call_res['event_name'])
-            # print('received tool_call res: ', tool_call_res)
-                    
-            self.from_char(self.services.llm.get_response(tool_call_res)) # send result to llm
-
         if action == 'interaction':
-            print(f"{self.character}: {content['message']}")
+            self.to_ui(content)
+        elif action == 'tool_call':
+            await self.tool_call(content['tool'], content.get('function'), content.get('args'))
 
     def settings_menu(self): pass
 

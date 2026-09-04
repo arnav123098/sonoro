@@ -6,16 +6,11 @@ from starlette.staticfiles import StaticFiles
 from starlette.middleware import Middleware
 from starlette.middleware.cors import CORSMiddleware
 
-import inspect
-from io import BytesIO
+from interface.webui.movement import Movement
 
 class WebUI:
-    def __init__(self, store, services, tools, make_client):
-        self.sio = socketio.AsyncServer(
-            async_mode='asgi',
-            cors_allowed_origins='*',
-            max_http_buffer_size=8*1024*1024
-        )
+    def __init__(self, store, services):
+        self.sio = services.sio
 
         socket_app = socketio.ASGIApp(self.sio)
         self.app = Starlette(
@@ -27,101 +22,107 @@ class WebUI:
             middleware=[
                 Middleware(
                     CORSMiddleware,
-                    allow_origins=["http://localhost:5173"],
+                    allow_origins=["http://localhost:5173", "http://192.168.1.44:5173"],
                     allow_methods=["*"],
                     allow_headers=["*"]
                 )
             ]
         )
 
+        self.session = None
         self.services = services
-        self.tools = tools
         self.store = store
-        self.make_client = make_client
+        self.tool_call = None
 
-        self.config = None
-        
-        self.character = None
-        self.locked = False # only one character
+        # WALK IN/OUT
+        self.mv = Movement(self.sio)
+        self.services.tools.make_tool('movement', self.mv) # temporary sloppy fix
 
-    def start(self):
+        # SONORO HANDLERS
+        self.on_from_user = None
+
+        self.ext_sid = None
+
+    async def start(self):
         self.setup_handlers()
-        self.make_client(self.store.user.get_config().model_dump())
+        self.services.make_client(self.session.user)
 
-        uvicorn.run(
+        config = uvicorn.Config(
             self.app,
-            host="0.0.0.0",
-            port=3000,
-            log_level="info",
+            host="127.0.0.1",
+            port=3000
         )
 
-    async def handle_user_message(self, sid, data):
-        if data['type'] == 'audio':
-            audio_file = BytesIO(data['content'])
-            audio_file.name = "audio.wav"
+        server = uvicorn.Server(config)
+        self.services.server = server
 
-            content = self.services.stt.stt(audio_file).text
-            await self.sio.emit('sttRes', content)
-        else:
-            content = data['content']
-        
-        res = self.services.llm.get_response({
+        print('starting server...')
+        print('starting webui...')
+
+        await server.serve()
+
+    async def handle_connect(self, sid, *args):
+            print(f'connected {sid}')
+    
+    async def handle_disconnect(self, sid, *args):
+        if not sid == self.ext_sid:
+            await self.handle_deselect_character(sid)
+        print(f'disconnected {sid}')
+
+    # SONORO HANDLERS AND INTERACTION
+    async def from_user(self, sid, data):
+        if data['type'] == 'audio' and self.services.stt is not None:
+            data['content'] = self.services.stt.stt(data['content']).text
+            data['type'] = 'text'
+            await self.sio.emit('sttRes', data['content'])
+
+        await self.on_from_user({
             'event_name': 'user_message',
-            'content': content
+            'content': data
         })
 
-        await self.from_char(res, sid)
+    async def to_ui(self, content):
+        if content.get('speak', True) and self.services.tts is not None:
+            first = True
+            for audio in self.services.tts.tts(content['message'], content.get('expression', 'neutral')):
+                await self.sio.emit('playVoice', audio, to=self.mv.char_pos)
+                if first:
+                    await self.sio.emit('interaction', content)
+                    first = False
+        else:
+            await self.sio.emit('interaction', content)
 
-    async def from_char(self, res, sid):
+    async def default_from_char(self, res):
         action, content = res['action'], res['content']
 
-        if action == 'tool_call':
-            tool_name, function, args = content.get('tool'), content.get('function'), content.get('args')
-
-            tool_obj = self.tools.get(tool_name)
-            if tool_obj is not None:
-                fn = getattr(tool_obj, function, None)
-            else:
-                fn = None
-
-            if fn is not None:
-                tool_call_res = fn(**args)
-
-            if inspect.isawaitable(tool_call_res): tool_call_res = await tool_call_res
-
-            print('tool_call_done: ', tool_call_res['event_name'])
-            # print('received tool_call res: ', tool_call_res)
-                    
-            await self.from_char(self.services.llm.get_response(tool_call_res), sid) # send result to llm
-
         if action == 'interaction':
-            if content.get('speak', True):
-                audio = self.services.tts.tts(content['message'], content.get('expression', 'neutral'))
-                content['audio'] = audio
-
-            await self.sio.emit('interaction', content, to=sid)
+            await self.to_ui(content)
+        elif action == 'tool_call':
+            await self.tool_call(content['tool'], content.get('function'), content.get('args'))
+    
+    # MENU, CONFIGS AND UTILITIES
 
     async def handle_get_config(self, sid):
-        self.config = self.store.user.get_config().model_dump()
-        await self.sio.emit('loadConfig', self.config, to=sid)
+        self.session.user = self.store.user.get_config().model_dump()
+        await self.sio.emit('loadConfig', self.session.user, to=sid)
 
     async def handle_update_config(self, sid, updated_config):
-        self.config = self.store.user.write_config(updated_config)['config'].model_dump()
-        self.make_client(self.config)
-        await self.sio.emit('loadConfig', self.config, to=sid)
+        self.session.user = self.store.user.write_config(updated_config)['config'].model_dump()
+        self.services.make_client(self.session.user)
+
+        await self.sio.emit('loadConfig', self.session.user, to=sid)
 
     async def handle_get_models(self, sid, model_type, config = None):
         service = self.services.llm if model_type == 'llm' else self.services.stt
+        service.make_client(config or self.session.user)
 
-        service.make_client(config or self.config)
-
-        models = self.services.llm.client.models.list().data
-        model_list = [m.id for m in models if 'whisper' not in m.id] if model_type == 'llm' else [m.id for m in models if 'whisper' in m.id]
-
-        await self.sio.emit('listModels', [model_list, model_type], to=sid)
+        await self.sio.emit('listModels', [service.list_models(), model_type], to=sid)
 
     async def handle_get_characters(self, sid):
         character_list = {n: self.to_url((f'{n}/images/{p}' if p is not None else f'a-chan/images/pfp.png'), 'characters') for n, p in self.store.characters.list_characters().items()}
+
+        if self.mv.char_conn: # one character at a time
+            character_list = {n: p for n, p in character_list.items() if n == self.session.character['name']}
 
         await self.sio.emit('listCharacters', character_list, to=sid)
 
@@ -135,25 +136,44 @@ class WebUI:
         await self.sio.emit('savedCharacterSuccess', to=sid)
 
     async def handle_gen_desc(self, sid, data):
-        await self.sio.emit('genDesc', self.services.llm.get_character_description(data, self.tools['web_search']), to=sid)
+        await self.sio.emit('genDesc', self.services.llm.get_character_description(data, self.services.tools.tools['web_search']), to=sid)
 
     async def handle_select_character(self, sid, name):
-        self.character = self.store.characters.get_config(name)
+        if (self.session.character or {}).get('name') == name:
+            await self.sio.emit('selectedCharacter', {
+                'name': name,
+                'vrm_model': self.to_url(f"{name}/models/{self.session.character['vrm_model']}", 'characters'),
+                'theme': self.session.character['theme']
+            }, to=sid)
+            return
+        
+        self.session.character = self.store.characters.get_config(name)
+        self.mv.reset()
 
-        if self.character.theme.chat_background is not None:
-            chat_bg = self.to_url(f'{self.character.name}/images/{self.character.theme.chat_background}', 'characters')
-            self.character.theme.chat_background = chat_bg
+        if self.session.character.theme.chat_background is not None:
+            chat_bg = self.to_url(f'{self.session.character.name}/images/{self.session.character.theme.chat_background}', 'characters')
+            self.session.character.theme.chat_background = chat_bg
 
-        self.character = self.character.model_dump()
+        self.session.character = self.session.character.model_dump()
 
-        self.services.llm.set_character(self.character)
-        self.services.tts.set_character(self.character)
+        self.services.llm.set_character(self.session.character)
+        self.services.tts.set_character(self.session.character)
 
         await self.sio.emit('selectedCharacter', {
             'name': name,
-            'vrm_model': self.to_url(f"{name}/models/{self.character['vrm_model']}", 'characters'),
-            'theme': self.character['theme']
+            'vrm_model': self.to_url(f"{name}/models/{self.session.character['vrm_model']}", 'characters'),
+            'theme': self.session.character['theme']
         }, to=sid)
+
+    async def handle_movement_setup(self, sid):
+        await self.mv.setup(sid)
+
+    async def handle_deselect_character(self, sid):
+        self.services.llm.save_mem()
+        await self.mv.remove(sid)
+
+    async def handle_walked_out(self, sid, dir):
+        await self.mv.manage_char_pos(dir)
 
     async def handle_delete_character(self, sid, name):
         self.store.characters.delete_character(name)
@@ -199,13 +219,6 @@ class WebUI:
     async def handle_delete_asset(self, sid, character, asset):
         self.store.characters.delete_asset(character, asset)
 
-    async def handle_connect(self, sid, *args):
-        print(f'connected {sid}')
-    
-    async def handle_disconnect(self, sid, *args):
-        self.services.llm.save_mem()
-        print(f'disconnected {sid}')
-
     def to_url(self, path, store):
         dir = {
             'characters': self.store.character_dir,
@@ -236,5 +249,8 @@ class WebUI:
 
         # interaction
         self.sio.on('selectCharacter', self.handle_select_character)
+        self.sio.on('movementSetup', self.handle_movement_setup)
+        self.sio.on('deselectCharacter', self.handle_deselect_character)
+        self.sio.on('walkedOut', self.handle_walked_out)
         self.sio.on('getAnimations', self.handle_get_animations)
-        self.sio.on('userMessage', self.handle_user_message)
+        self.sio.on('userMessage', self.from_user)

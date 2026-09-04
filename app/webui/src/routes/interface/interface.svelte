@@ -7,6 +7,7 @@
             <button onclick={() => {
                 globals.bgImg = '/lucydream.gif';
                 globals.current_char = null;
+                globals.conn.emit('deselectCharacter')
             }}>{'<-'}</button>
             <br><br>
         </div>
@@ -31,9 +32,10 @@
     import { globals } from '$lib/index.svelte';
     import { onMount } from 'svelte';
     import { Lipsync } from "wawa-lipsync";
+  import { sineOut } from 'svelte/easing';
 
     const lipsyncManager = new Lipsync();
-    let lipsyncRunning = $state(false);
+    let playingVoice = $state(false);
 
     let RecordRTC;
     let isRec = $state(false);
@@ -42,6 +44,8 @@
 
     let messages;
     let userMessage = $state('');
+
+    let audioQueue = [];
 
     const handleInteraction = async (data) => {
         console.log('interaction: ', data)
@@ -54,33 +58,42 @@
 
         const animation = data?.animation;
         if (animation) globals.animator.playAnimation(animation);
+    };
 
-        const audio = data?.audio;
-        if (audio) {
+    const handleVoice = (audio) => {
+        console.log('received audio')
+        if (playingVoice) {
+            audioQueue.push(audio);
+        } else {
             const blob = new Blob([audio], { type: "audio/wav" });
             const url = URL.createObjectURL(blob);
 
             const player = new Audio(url);
             lipsyncManager.connectAudio(player);
 
-            lipsyncRunning = true;
+            playingVoice = true;
             requestAnimationFrame(analyzeAudio);
             player.play();
 
             player.onended = () => {
-                lipsyncRunning = false;
+                playingVoice = false;
 
                 if (globals.animator) {
                     globals.animator.setViseme(null, true);
                 }
                 
                 URL.revokeObjectURL(url);
-            };
-        };
-    };
+
+                if (audioQueue.length != 0) {
+                    handleVoice(audioQueue[0]);
+                    audioQueue.splice(0, 1);
+                }
+            }
+        }
+    }
 
     const analyzeAudio = () => {
-        if (!lipsyncRunning) return;
+        if (!playingVoice) return;
 
         lipsyncManager.processAudio();
 
@@ -103,7 +116,7 @@
 
         if (!audio) {
             const li = document.createElement('li');
-            li.textContent = '^_^: ' + content;
+            li.textContent = 'me: ' + content;
             messages.appendChild(li);
 
             messages.scrollTop = messages.scrollHeight;
@@ -112,14 +125,29 @@
 
     const handleSttRes = async (data) => {
         const li = document.createElement('li');
-        li.textContent = '^_^: ' + data;
+        li.textContent = 'me: ' + data;
         messages.appendChild(li);
         messages.scrollTop = messages.scrollHeight;
+    };
+
+    const handleWalkIn = (dir) => {
+        if (globals.animator) {
+            console.log('walkIn', dir);
+            globals.animator.walkIn(dir);
+        }
+    };
+
+    const handleWalkOut = async (dir) => {
+        console.log('walkOut', dir)
+        globals.animator.walkOut(dir);
     };
 
     onMount(() => {
         globals.conn.on('sttRes', handleSttRes);
         globals.conn.on('interaction', handleInteraction);
+        globals.conn.on('playVoice', handleVoice);
+        globals.conn.on('walkIn', handleWalkIn)
+        globals.conn.on('walkOut', handleWalkOut);
 
         globals.bgImg = globals.current_char.theme.chat_background || '/chatBg.jpg';
 
@@ -128,7 +156,16 @@
         return () => {
             globals.conn.off('sttRes', handleSttRes);
             globals.conn.off('interaction', handleInteraction);
+            globals.conn.off('playVoice', handleVoice);
+            globals.conn.off('walkIn', handleWalkIn)
+            globals.conn.off('walkOut', handleWalkOut);
             document.removeEventListener('keydown', handleEnterPress);
+        }
+    });
+
+    $effect(() => {
+        if (globals.animator && globals.animator.actions) {
+            setTimeout(() => globals.conn.emit('movementSetup'), 1000);
         }
     });
 
