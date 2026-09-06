@@ -10,7 +10,12 @@ class Tools:
             'music_player': MusicPlayer()
         }
 
+        self.unready = []
+
     async def call(self, tool_name, function, args):
+        if tool_name in self.unready:
+            return {'event_name': f'Failed to use tool {tool_name}', 'content': 'API keys are not configured'}
+        
         tool_obj = self.tools.get(tool_name)
         if tool_obj is not None:
             fn = getattr(tool_obj, function, None)

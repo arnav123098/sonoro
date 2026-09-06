@@ -12,6 +12,7 @@ from memory import Memory
 from ext import Ext
 
 from dataclasses import dataclass
+from typing import Callable
 import inspect
 import socketio
 import asyncio
@@ -20,6 +21,8 @@ import uvicorn
 @dataclass
 class SessionData:
     user: dict
+    user_ready: bool
+    update_user: Callable
     character: CharacterConfig | None = None
 
 class Sonoro:
@@ -53,6 +56,30 @@ class Sonoro:
 
         self.ext = Ext(self)
 
+    def check_user_config(self, config):
+        user_ready = True
+
+        # LLM, STT, TTS
+        for provider in (config.llm, config.stt, config.tts):
+            if not all(value for value in provider.model_dump().values()):
+                user_ready = False
+                break
+
+        # Web search
+        if not all(config.tools.web_search.model_dump().values()): # a quick brute force solution even though it's sloppy (meow)
+            if 'web_search' not in self.services.tools.unready:
+                self.services.tools.unready.append('web_search')
+        else:
+            if 'web_search' in self.services.tools.unready:
+                self.services.tools.unready.remove('web_search')
+
+        return user_ready
+
+    def session_update_user(self):
+        config = self.store.user.get_config()
+        self.session.user = config.model_dump()
+        self.session.user_ready = self.check_user_config(config)
+
     def make_interface(self, interface_type):
         if interface_type not in ('webui', 'tui'):
             raise ValueError(f"Unknown interface type: {interface_type}. Interface types include: webui, tui")
@@ -74,8 +101,11 @@ class Sonoro:
             self.interface = TUI(self.store, self.services)
 
     async def start(self):
+        config = self.store.user.get_config()
         self.session = SessionData(
-            user = self.store.user.get_config().model_dump()
+            user = config.model_dump(),
+            user_ready = self.check_user_config(config),
+            update_user = self.session_update_user
         )
 
         self.interface.session = self.session

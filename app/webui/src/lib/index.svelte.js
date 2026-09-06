@@ -11,5 +11,6 @@ export const globals = $state({
     characters: null,
     current_char: null,
     animator: null,
-    bgImg: '/lucydream.gif'
+    bgImg: '/flowers.gif',
+    defaultbg: '/flowers.gif'
 });

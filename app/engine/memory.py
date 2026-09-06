@@ -28,7 +28,7 @@ class Memory:
 
     # for now don't have the delete option
 
-    def react(self, char_name:str, text, tags=None, topk=10):
+    def react(self, char_name:str, text, tags=None, topk=5):
         # DIRECT MATCHES
         collection = self._get_collection(char_name)
 

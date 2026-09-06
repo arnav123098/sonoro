@@ -2,12 +2,12 @@ from pathlib import Path
 from pydantic import BaseModel, ValidationError
 
 class ProviderConfig(BaseModel):
-    base_url: str
-    api_key: str
-    model: str
+    base_url: str | None = None
+    api_key: str | None = None
+    model: str | None = None
 
 class TTSConfig(BaseModel):
-    provider: str
+    provider: str | None = None
 
 class WebSearchConfig(BaseModel):
     tavily_api_key: str | None = None

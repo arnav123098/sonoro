@@ -131,7 +131,8 @@ class LLM:
         text = ''
 
         if data['type'] == 'text': text = data['data']
-        elif data['type'] == 'url' and web_search is not None: text = web_search.scrape(data['data'])
+        elif data['type'] == 'url' and web_search is not None:
+            text = web_search.scrape(data['data'])['content']
 
         if not text: return
 
@@ -158,7 +159,7 @@ class LLM:
             text = event['content']['content'] if event['event_name'] == 'user_message' else event['content']
             tags = list(set(tag for t in self.context.recent.values() for tag in t['tags'] if tag != 'none')) or None
             # print('tags: ', tags) # debug
-            info_content += f'\nRelated Information from memory:\n{json.dumps(self.memory.react(self.context.curr_character, text, tags))}'
+            info_content += f'\nRelated Information from memory:\n{json.dumps(self.memory.react(self.context.curr_character, text, tags).get('memories'))}'
 
         now = self.context.get_time()
         info_content += f"\nTIME: {now['day'], now['date']} | {now['time']}"
@@ -188,7 +189,7 @@ class LLM:
         self.context.make_context(res, is_llm=True)
         return json.loads(res)
 
-    def summarize_context(self, upto=3):
+    def summarize_context(self, upto=6):
         if len(self.context.convo_context) <= upto + 1: return # + 1 for sys
 
         convo = ''
@@ -248,7 +249,12 @@ class LLM:
         res = self.use_llm(context)
         if res == '_no_save': return
 
-        return json.loads(res)
+        try:
+            res = json.loads(res)
+        except Exception:
+            return
+
+        return res
 
     def save_recent(self):
         print(f"[memory] saving recent context for {self.context.curr_character}")

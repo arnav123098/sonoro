@@ -5,9 +5,9 @@
     <div id='text-ui'>
         <div>
             <button onclick={() => {
-                globals.bgImg = '/lucydream.gif';
+                globals.bgImg = globals.defaultbg;
                 globals.current_char = null;
-                globals.conn.emit('deselectCharacter')
+                globals.conn.emit('deselectCharacter');
             }}>{'<-'}</button>
             <br><br>
         </div>
@@ -48,15 +48,19 @@
     let audioQueue = [];
 
     const handleInteraction = async (data) => {
-        console.log('interaction: ', data)
-        const message = data.message;
+        console.log('interaction: ', data.at(-1));
 
-        const li = document.createElement('li');
-        li.textContent = globals.current_char.name + ': ' + message;
-        messages.appendChild(li);
+        messages.replaceChildren();
+
+        data.forEach(d => {
+            const li = document.createElement('li');
+            li.textContent = d.author + ': ' + d.message;
+            messages.appendChild(li);
+        });
+        
         messages.scrollTop = messages.scrollHeight;
 
-        const animation = data?.animation;
+        const animation = data.at(-1)?.animation;
         if (animation) globals.animator.playAnimation(animation);
     };
 
@@ -113,21 +117,6 @@
             type: audio ? 'audio' : 'text',
             content: content
         });
-
-        if (!audio) {
-            const li = document.createElement('li');
-            li.textContent = 'me: ' + content;
-            messages.appendChild(li);
-
-            messages.scrollTop = messages.scrollHeight;
-        };
-    };
-
-    const handleSttRes = async (data) => {
-        const li = document.createElement('li');
-        li.textContent = 'me: ' + data;
-        messages.appendChild(li);
-        messages.scrollTop = messages.scrollHeight;
     };
 
     const handleWalkIn = (dir) => {
@@ -143,18 +132,16 @@
     };
 
     onMount(() => {
-        globals.conn.on('sttRes', handleSttRes);
         globals.conn.on('interaction', handleInteraction);
         globals.conn.on('playVoice', handleVoice);
         globals.conn.on('walkIn', handleWalkIn)
         globals.conn.on('walkOut', handleWalkOut);
 
-        globals.bgImg = globals.current_char.theme.chat_background || '/chatBg.jpg';
+        globals.bgImg = globals.current_char.theme.chat_background || '/chat.jpg';
 
         document.addEventListener('keydown', handleEnterPress);
 
         return () => {
-            globals.conn.off('sttRes', handleSttRes);
             globals.conn.off('interaction', handleInteraction);
             globals.conn.off('playVoice', handleVoice);
             globals.conn.off('walkIn', handleWalkIn)
@@ -267,7 +254,7 @@
         right: 2rem;
         transform: translateY(-50%);
 
-        background: rgba(255, 255, 255, 0.2);
+        background: rgba(255, 255, 255, 0.5);
         border-radius: 16px;
         box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
         backdrop-filter: blur(5px);
@@ -275,7 +262,7 @@
         border: 1px solid rgba(255, 255, 255, 0.3);
 
         height: 80%;
-        width: 25%;
+        width: 20%;
 
         display: flex;
         flex-direction: column;

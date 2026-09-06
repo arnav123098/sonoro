@@ -7,7 +7,7 @@
         {#if globals.current_char}
             <Interface />
         {:else}
-            <button id='settings-btn' onclick={() => settingsActive = true}>Settings</button>
+            <button id='settings-btn' onclick={() => settingsActive = true}><b>Settings</b></button>
             <Window name='Select Character' closeWindow={() => {}} required={true}>
                 <SelectCharacter />
             </Window>
@@ -52,7 +52,7 @@
             window.location.reload();
         });
         globals.conn.on('info', (data) => {
-            console.log(data);
+            window.alert(data?.message);
         })
 
         globals.conn.on('loadConfig', handleLoadConfig);

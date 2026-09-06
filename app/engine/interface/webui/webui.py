@@ -43,6 +43,8 @@ class WebUI:
 
         self.ext_sid = None
 
+        self.chat = []
+
     async def start(self):
         self.setup_handlers()
         self.services.make_client(self.session.user)
@@ -65,8 +67,9 @@ class WebUI:
             print(f'connected {sid}')
     
     async def handle_disconnect(self, sid, *args):
-        if not sid == self.ext_sid:
-            await self.handle_deselect_character(sid)
+        if self.session.character:
+            if not sid == self.ext_sid:
+                await self.handle_deselect_character(sid)
         print(f'disconnected {sid}')
 
     # SONORO HANDLERS AND INTERACTION
@@ -74,7 +77,10 @@ class WebUI:
         if data['type'] == 'audio' and self.services.stt is not None:
             data['content'] = self.services.stt.stt(data['content']).text
             data['type'] = 'text'
-            await self.sio.emit('sttRes', data['content'])
+
+        self.chat.append({'author': 'me', 'message': data['content']})
+
+        await self.sio.emit('interaction', self.chat)
 
         await self.on_from_user({
             'event_name': 'user_message',
@@ -82,15 +88,17 @@ class WebUI:
         })
 
     async def to_ui(self, content):
+        self.chat.append({'author': self.session.character['name'], 'message': content['message'], 'animation': content.get('animation')})
+
         if content.get('speak', True) and self.services.tts is not None:
             first = True
             for audio in self.services.tts.tts(content['message'], content.get('expression', 'neutral')):
                 await self.sio.emit('playVoice', audio, to=self.mv.char_pos)
                 if first:
-                    await self.sio.emit('interaction', content)
+                    await self.sio.emit('interaction', self.chat)
                     first = False
         else:
-            await self.sio.emit('interaction', content)
+            await self.sio.emit('interaction', self.chat)
 
     async def default_from_char(self, res):
         action, content = res['action'], res['content']
@@ -107,7 +115,8 @@ class WebUI:
         await self.sio.emit('loadConfig', self.session.user, to=sid)
 
     async def handle_update_config(self, sid, updated_config):
-        self.session.user = self.store.user.write_config(updated_config)['config'].model_dump()
+        self.store.user.write_config(updated_config)['config']
+        self.session.update_user()
         self.services.make_client(self.session.user)
 
         await self.sio.emit('loadConfig', self.session.user, to=sid)
@@ -128,26 +137,43 @@ class WebUI:
 
     async def handle_get_character_data(self, sid, name, create=False):
         character = self.store.characters.get_character(name, create=create)
+
+        if not character: return await self.sio.emit('info', {'message': 'An error occurred.\nCannot create character.'})
+
         await self.sio.emit('loadCharacterData', character.model_dump(), to=sid)
 
     async def handle_update_character(self, sid, name, updated_config):
-        self.store.characters.write_config(name, updated_config) # TODO: handle toasters
+        self.store.characters.write_config(name, updated_config)
 
         await self.sio.emit('savedCharacterSuccess', to=sid)
 
     async def handle_gen_desc(self, sid, data):
+        if data['type'] == 'url' and 'web_search' in self.services.tools.unready:
+            return await self.sio.emit('genDesc', 'Web Search tool is not configured', to=sid)
+        
         await self.sio.emit('genDesc', self.services.llm.get_character_description(data, self.services.tools.tools['web_search']), to=sid)
 
     async def handle_select_character(self, sid, name):
-        if (self.session.character or {}).get('name') == name:
-            await self.sio.emit('selectedCharacter', {
+        if self.session.character and self.session.character['name'] == name:
+            return await self.sio.emit('selectedCharacter', {
                 'name': name,
                 'vrm_model': self.to_url(f"{name}/models/{self.session.character['vrm_model']}", 'characters'),
                 'theme': self.session.character['theme']
             }, to=sid)
+
+        self.chat = []
+
+        if not self.session.user_ready:
+            await self.sio.emit('info', {'message': f'Cannot proceed. Open settings and setup Sonoro properly first.'})
             return
         
-        self.session.character = self.store.characters.get_config(name)
+        config = self.store.characters.get_config(name)
+
+        if not self.check_character_config(config):
+            await self.sio.emit('info', {'message': f'Cannot Select Character {name}\nReason: Incomplete configuration'})
+            return
+
+        self.session.character = config
         self.mv.reset()
 
         if self.session.character.theme.chat_background is not None:
@@ -171,6 +197,9 @@ class WebUI:
     async def handle_deselect_character(self, sid):
         self.services.llm.save_mem()
         await self.mv.remove(sid)
+        if not self.mv.char_conn:
+            self.session.character = None
+            self.chat = []
 
     async def handle_walked_out(self, sid, dir):
         await self.mv.manage_char_pos(dir)
@@ -218,6 +247,12 @@ class WebUI:
 
     async def handle_delete_asset(self, sid, character, asset):
         self.store.characters.delete_asset(character, asset)
+
+    def check_character_config(self, config):
+        if not all((config.vrm_model, config.expression_to_voice.neutral)):
+            return False
+        else:
+            return True
 
     def to_url(self, path, store):
         dir = {

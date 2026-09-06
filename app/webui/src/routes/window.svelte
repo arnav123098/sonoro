@@ -15,8 +15,6 @@
 </div>
 
 <script>
-    import { onMount } from "svelte";
-
     let win;
 
     let {
@@ -35,8 +33,8 @@
         left: 50%;
         transform: translate(-50%, -50%);
         overflow: hidden;
-        height: 70vh;
-        width: 75vw;
+        height: 80vh;
+        width: 90vw;
         max-width: 800px;
         background: rgba(0, 134, 255, 0.3);
         border-radius: 16px;

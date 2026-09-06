@@ -46,11 +46,13 @@
     <button onclick={() => genDescBoxVisible = !genDescBoxVisible}>use ai to write description</button>
 
     {#if genDescBoxVisible}
+        <br><br><br>
+        <h2>Enter url of a page or some text about the character</h2>
         <br><br>
         <textarea bind:value={genDescInput}>
-            Enter url of a page or some text about the character
         </textarea>
         <br>
+        <h2>Type</h2>
         <select bind:value={genDescInputType}>
             <option>url</option>
             <option>text</option>
@@ -101,7 +103,7 @@
     <hr>
 
     <br>
-    <button onclick={deleteCharacter}>Delete Character</button>
+    <button onclick={deleteCharacter} id='delete-btn'>Delete Character</button>
     
     <button onclick={handleSaveCharacter}>Save Character</button>
 
@@ -122,6 +124,7 @@
     let genDescInput = $state('');
     let genDescInputType = $state('');
 
+    let original_name;
     let config = $state();
 
     let assets = $state();
@@ -160,6 +163,9 @@
     }
 
     const deleteCharacter = () => {
+        const c = window.confirm('This action cannot be undone.\nDo you wish to continue anyway?')
+        if (!c) return;
+
         globals.conn.emit('deleteCharacter', character);
         window.location.reload();
     }
@@ -167,12 +173,20 @@
     const handleLoadCharacterDir = async (data) => {
         console.log('editing character: ', data)
         config = data.config;
+        original_name = data.config.name
         vrm_models = data.vrm_models;
         images = data.images;
         voicelines = data.voicelines;
     };
 
-    const handleSaveCharacter = async () => config.name && globals.conn.emit('updateCharacter', config.name, config);
+    const handleSaveCharacter = async () => {
+        if (Object.hasOwn(globals.characters, config.name) && config.name != original_name) {
+            window.alert(`Another character has the name ${config.name}`);
+            return;
+        }
+
+        config.name && globals.conn.emit('updateCharacter', original_name, config);
+    }
     const handleSavedCharacterSuccess = async () => window.location.reload();
 
     const generateDesc = () => {
@@ -181,7 +195,10 @@
             type: genDescInputType,
             data: genDescInput
         });
+
+        window.alert('Generating description...');
     };
+
     const handleGenDesc = async (data) => {
         config.description = data;
         genDescBoxVisible = false;
@@ -240,13 +257,34 @@
         border-radius: 10px;
     }
 
-    input, textarea, button {
+    input, textarea, button, input[type="file"]::file-selector-button {
         border: solid 1px rgb(0, 140, 255);
         color: white;
     }
 
-    input, textarea, :global(select) {
+    input, textarea, :global(select), input[type="file"]::file-selector-button {
         background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    input[type="file"] {
+        border: none;
+        background-color: transparent;
+        height: 3rem;
+    }
+
+    input[type="file"]::file-selector-button {
+        border-radius: 1rem;
+        height: 2rem;
+    }
+
+    input[type="file"]::file-selector-button:hover {
+        background-color: rgb(0, 140, 255);
+        cursor: pointer;
+    }
+
+    #delete-btn:hover {
+        background-color: rgb(255, 75, 75);
+        border-color: white;
     }
 
     hr {

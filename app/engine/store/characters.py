@@ -85,6 +85,9 @@ class CharacterStore:
     def write_config(self, name: str, config: dict) -> dict:
             char_dir = self.dir / name
 
+            if config['name'] != name:
+                char_dir = char_dir.rename(self.dir / config['name'])
+
             try:
                 config = CharacterConfig.model_validate(config)
             except ValidationError as e:
