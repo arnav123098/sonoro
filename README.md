@@ -77,7 +77,7 @@ Soon, you'll be able to use Sonoro externally as a tool for letting your ai use 
 - [x] sdk
 - [x] refine character personality and behavior
 - [x] better memory system
-- [ ] some basic refinements in the ui
-- [x] handling exceptions and edge cases (what a drag! so only basic ones for now)
+- [x] some basic refinements in the ui
+- [ ] handling exceptions and edge cases (what a drag! so only basic ones for now)
 - [ ] finalize everything and create a release (beta)
 ---
