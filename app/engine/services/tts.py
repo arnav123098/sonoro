@@ -33,7 +33,7 @@ class TTS:
     
     def make_client(self, config):
         if not self.is_tts: return
-        self.tts_provider = config.get('tts', {}).get('provider')
+        self.tts_provider = (config.get('tts') or {}).get('provider') or {}
 
         if self.tts_provider == 'Kyutai Pocket TTS':
             self.model = TTSModel.load_model()

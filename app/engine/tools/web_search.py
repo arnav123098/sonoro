@@ -9,7 +9,7 @@ class WebSearch:
         self.scraper_key = None
 
     def make_client(self, config):
-        web_search_config = config.get('tools', {}).get('web_search', {})
+        web_search_config = (config.get('tools') or {}).get('web_search') or {}
 
         tavily_key = web_search_config.get('tavily_api_key')
         self.client = TavilyClient(tavily_key) if tavily_key else None

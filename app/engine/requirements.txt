@@ -167,9 +167,9 @@ s3transfer==0.19.2
 safehttpx==0.1.7
 safetensors==0.8.0
 scikit-learn==1.9.0
-scipy==1.18.0
+scipy==1.17.1
 semantic-version==2.10.0
-sentencepiece==0.2.2
+sentencepiece==0.2.0
 sentry-sdk==2.67.1
 setuptools==83.0.0
 shellingham==1.5.4
@@ -192,7 +192,7 @@ tiktoken==0.13.0
 tokenizers==0.22.2
 tomli==2.4.1
 tomlkit==0.14.0
-torch==2.13.0
+torch==2.6.0
 torch-complex==0.4.4
 torch-einops-utils==0.1.18
 torchaudio==2.11.0

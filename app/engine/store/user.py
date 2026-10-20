@@ -14,7 +14,7 @@ class WebSearchConfig(BaseModel):
     scraper_api_key: str | None = None
 
 class ToolsConfig(BaseModel):
-    web_search: WebSearchConfig
+    web_search: WebSearchConfig | None = None
 
 class UserConfig(BaseModel):
     llm: ProviderConfig
@@ -32,7 +32,12 @@ class UserStore:
             with open(self.dir / 'config.json', 'r') as f:
                 return UserConfig.model_validate_json(f.read())
         except Exception:
-            return UserConfig()
+            return UserConfig(
+                llm=ProviderConfig(),
+                stt=ProviderConfig(),
+                tts=TTSConfig(),
+                tools=ToolsConfig(web_search=WebSearchConfig())
+            )
 
     def write_config(self, config: dict) -> dict:
             try:

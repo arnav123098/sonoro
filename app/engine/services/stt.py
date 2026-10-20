@@ -7,7 +7,7 @@ class STT:
         self.model = None
 
     def make_client(self, config):
-        stt_config = config.get('stt', {})
+        stt_config = config.get('stt') or {}
         base_url, api_key, model = stt_config.get('base_url'), stt_config.get('api_key'), stt_config.get('model')
 
         self.client = OpenAI(

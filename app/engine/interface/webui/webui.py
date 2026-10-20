@@ -52,7 +52,8 @@ class WebUI:
         config = uvicorn.Config(
             self.app,
             host="127.0.0.1",
-            port=3000
+            port=3000,
+            ws_max_size=100_000_000
         )
 
         server = uvicorn.Server(config)
@@ -219,6 +220,7 @@ class WebUI:
         }, to=sid)
 
     async def handle_upload_assets(self, sid, character, assets):
+        print('here')
         formats = {
             'models': ['vrm'],
             'voicelines': ['wav', 'ogg'],

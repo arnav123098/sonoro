@@ -86,7 +86,7 @@ class LLM:
         self.context.custom_sys = custom_sys_func
 
     def make_client(self, config):
-        llm_config = config.get('llm', {})
+        llm_config = config.get('llm') or {}
         base_url, api_key, model = llm_config.get('base_url'), llm_config.get('api_key'), llm_config.get('model')
 
         self.client = OpenAI(
@@ -108,7 +108,7 @@ class LLM:
 
         content = {json.dumps(event['content'], indent=2)} if type(event['content']) == dict else event['content']
 
-        return f'[{event['event_name']}] {content}'
+        return f"[{event['event_name']}] {content}"
 
     def use_llm(self, context): # made this for sdk
         args = dict(
@@ -122,7 +122,7 @@ class LLM:
         try:
             response = self.client.chat.completions.create(**args)
         except Exception as e:
-            # print('Exception encountered: ', e) # debug
+            print('Exception encountered: ', e) # debug
             return '[OpenAIError]'
 
         return response.choices[0].message.content
@@ -159,7 +159,7 @@ class LLM:
             text = event['content']['content'] if event['event_name'] == 'user_message' else event['content']
             tags = list(set(tag for t in self.context.recent.values() for tag in t['tags'] if tag != 'none')) or None
             # print('tags: ', tags) # debug
-            info_content += f'\nRelated Information from memory:\n{json.dumps(self.memory.react(self.context.curr_character, text, tags).get('memories'))}'
+            info_content += f"\nRelated Information from memory:\n{json.dumps(self.memory.react(self.context.curr_character, text, tags).get('memories'))}"
 
         now = self.context.get_time()
         info_content += f"\nTIME: {now['day'], now['date']} | {now['time']}"

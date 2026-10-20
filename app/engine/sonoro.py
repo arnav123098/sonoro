@@ -33,7 +33,7 @@ class Sonoro:
         self.sio = socketio.AsyncServer(
             async_mode='asgi',
             cors_allowed_origins='*',
-            max_http_buffer_size=8*1024*1024
+            max_http_buffer_size=100_000_000
         )
 
         self.server = None # uvicorn
@@ -61,12 +61,12 @@ class Sonoro:
 
         # LLM, STT, TTS
         for provider in (config.llm, config.stt, config.tts):
-            if not all(value for value in provider.model_dump().values()):
+            if provider is not None and not all(value for value in provider.model_dump().values()):
                 user_ready = False
                 break
 
         # Web search
-        if not all(config.tools.web_search.model_dump().values()): # a quick brute force solution even though it's sloppy (meow)
+        if config.tools is None or config.tools.web_search is None or not all(config.tools.web_search.model_dump().values()): # a quick brute force solution even though it's sloppy (meow)
             if 'web_search' not in self.services.tools.unready:
                 self.services.tools.unready.append('web_search')
         else:
