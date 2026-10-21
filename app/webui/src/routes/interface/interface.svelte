@@ -32,7 +32,6 @@
     import { globals } from '$lib/index.svelte';
     import { onMount } from 'svelte';
     import { Lipsync } from "wawa-lipsync";
-  import { sineOut } from 'svelte/easing';
 
     const lipsyncManager = new Lipsync();
     let playingVoice = $state(false);
@@ -47,14 +46,19 @@
 
     let audioQueue = [];
 
+    let busy = $state(false);
+
     const handleInteraction = async (data) => {
         console.log('interaction: ', data.at(-1));
+
+        if (data.at(-1).author != 'me') busy = false;
 
         messages.replaceChildren();
 
         data.forEach(d => {
             const li = document.createElement('li');
-            li.textContent = d.author + ': ' + d.message;
+            li.textContent = d.message;
+            li.classList.add(d.author == 'me' ? 'me-bubble' : 'char-bubble');
             messages.appendChild(li);
         });
         
@@ -65,7 +69,7 @@
     };
 
     const handleVoice = (audio) => {
-        console.log('received audio')
+        console.log('received audio');
         if (playingVoice) {
             audioQueue.push(audio);
         } else {
@@ -112,11 +116,24 @@
 
     const sendMessage = (content, audio=false) => {
         if (!content) return;
+        if (busy) {
+            window.alert("Cannot send more than one message at once.\nWait for the response for the last one.");
+            return;
+        }
+
+        if (!audio) {
+            const li = document.createElement('li');
+            li.textContent = content;
+            li.classList.add('me-bubble');
+            messages.appendChild(li);
+        }
 
         globals.conn.emit('userMessage', {
             type: audio ? 'audio' : 'text',
             content: content
         });
+
+        busy = true;
     };
 
     const handleWalkIn = (dir) => {
@@ -164,7 +181,7 @@
     }
 
     async function startRec() {
-        stream = await navigator.mediaDevices.getUserMedia({ 
+        stream = await navigator.mediaDevices.getUserMedia({
             audio: {
                 echoCancellation: true,
                 noiseSuppression: true,
@@ -215,13 +232,60 @@
         height: 100%;
         width: 100%;
         display: flex;
+        justify-content: space-between;
+    }
+
+    #threeD {
+        width: 75%;
+        height: 100%;
+    }
+
+    #text-ui {
+        background: rgba(255, 255, 255, 0.7);
+        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        backdrop-filter: blur(5px);
+        -webkit-backdrop-filter: blur(5px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+
+        height: 100%;
+        width: 22.5%;
+
+        display: flex;
+        flex-direction: column;
+        justify-content: end;
+
+        padding: 2rem;
     }
 
     :global(#interface *) {
         color: black;
     }
 
+    :global(.me-bubble) {
+        width: fit-content;
+        padding: 0.65rem;
+        background-color: rgb(0, 145, 255);
+        color: white !important;
+        border: none;
+        border-radius: 15px;
+        align-self: flex-end;
+        margin-left: 1rem;
+    }
+
+    :global(.char-bubble) {
+        width: fit-content;
+        padding: 0.65rem;
+        background-color: rgb(59, 59, 59);
+        color: white !important;
+        border: none;
+        border-radius: 15px;
+        align-self: flex-start;
+        margin-right: 1rem;
+    }
+
     #messages {
+        display: flex;
+        flex-direction: column;
         list-style: none;
         height: 90%;
         overflow-y: scroll;
@@ -246,28 +310,5 @@
 
     #messages::-webkit-scrollbar-thumb:hover {
         background: rgba(255,255,255,.4);
-    }
-
-    #text-ui {
-        position: absolute;
-        top: 50%;
-        right: 2rem;
-        transform: translateY(-50%);
-
-        background: rgba(255, 255, 255, 0.5);
-        border-radius: 16px;
-        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
-        backdrop-filter: blur(5px);
-        -webkit-backdrop-filter: blur(5px);
-        border: 1px solid rgba(255, 255, 255, 0.3);
-
-        height: 80%;
-        width: 20%;
-
-        display: flex;
-        flex-direction: column;
-        justify-content: end;
-
-        padding: 2rem;
     }
 </style>

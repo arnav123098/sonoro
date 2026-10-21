@@ -112,7 +112,7 @@
         0.1,
         100
         );
-        camera.position.set(0, 1.25, 1.5);
+        camera.position.set(0, 1.25, 1.85);
         return camera;
     }
 

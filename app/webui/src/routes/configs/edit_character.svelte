@@ -153,6 +153,8 @@
     }
 
     const deleteAsset = (name, type) => {
+        const c = window.confirm('Are you sure?');
+        if (!c) return;
         const asset = {
             name,
             type
@@ -163,7 +165,7 @@
     }
 
     const deleteCharacter = () => {
-        const c = window.confirm('This action cannot be undone.\nDo you wish to continue anyway?')
+        const c = window.confirm('This action cannot be undone.\nDo you wish to continue anyway?');
         if (!c) return;
 
         globals.conn.emit('deleteCharacter', character);

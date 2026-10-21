@@ -77,11 +77,12 @@ class WebUI:
     async def from_user(self, sid, data):
         if data['type'] == 'audio' and self.services.stt is not None:
             data['content'] = self.services.stt.stt(data['content']).text
-            data['type'] = 'text'
 
         self.chat.append({'author': 'me', 'message': data['content']})
 
-        await self.sio.emit('interaction', self.chat)
+        if data['type'] == 'stt':
+            data['type'] = 'text'
+            await self.sio.emit('interaction', self.chat)
 
         await self.on_from_user({
             'event_name': 'user_message',
