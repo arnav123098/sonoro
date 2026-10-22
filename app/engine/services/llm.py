@@ -296,4 +296,4 @@ class LLM:
                 docs.append(data['summary'])
                 metadatas.append({'tags': data['tags'], 'temporal_id': temporal_id})
 
-            if all(ids, docs, metadatas): self.memory.add(self.context.curr_character, ids, docs, metadatas)
+            if all([ids, docs, metadatas]): self.memory.add(self.context.curr_character, ids, docs, metadatas)

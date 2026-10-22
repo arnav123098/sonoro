@@ -5,6 +5,7 @@ class Ext:
 
     async def setup_ext(self, sid):
         self.sonoro.interface.ext_sid = sid
+        await self.sonoro.sio.emit('load_animations_ext', list(self.sonoro.store.animations.paths.keys()), to=sid)
 
     async def to_ext(self, event_type, event):
         await self.sonoro.sio.emit(event_type, event)
