@@ -80,7 +80,7 @@ class WebUI:
 
         self.chat.append({'author': 'me', 'message': data['content']})
 
-        if data['type'] == 'stt':
+        if data['type'] == 'audio':
             data['type'] = 'text'
             await self.sio.emit('interaction', self.chat)
 

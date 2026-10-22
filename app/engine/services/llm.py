@@ -210,7 +210,7 @@ class LLM:
                     'existing_summary': self.context.recent
                 }, indent=2)
             }
-        ]
+        ]   
 
         res = self.use_llm(context)
 
@@ -291,8 +291,9 @@ class LLM:
             temporal_id =  self.context.get_time()['date']
 
             for data in to_save.values():
+                if type(data) != dict: continue # temporary solution cuz llm breaks shit
                 ids.append(str(uuid.uuid4()))
                 docs.append(data['summary'])
                 metadatas.append({'tags': data['tags'], 'temporal_id': temporal_id})
 
-            self.memory.add(self.context.curr_character, ids, docs, metadatas)
+            if all(ids, docs, metadatas): self.memory.add(self.context.curr_character, ids, docs, metadatas)
