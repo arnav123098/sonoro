@@ -16,6 +16,7 @@ config.json
 
 # characters (except default)
 characters/yinlin
+characters/kei
 
 # OS
 .DS_Store

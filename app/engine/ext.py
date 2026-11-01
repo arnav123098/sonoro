@@ -5,7 +5,14 @@ class Ext:
 
     async def setup_ext(self, sid):
         self.sonoro.interface.ext_sid = sid
-        await self.sonoro.sio.emit('load_animations_ext', list(self.sonoro.store.animations.paths.keys()), to=sid)
+        self.sonoro.memory = None
+        await self.sonoro.sio.emit('load_ext', {
+            'animations': list(self.sonoro.store.animations.paths.keys()),
+            'interface': self.sonoro.interface_type
+        }, to=sid)
+
+    async def disconnect_ext(self, sid):
+        self.sonoro.interface.ext_sid = None
 
     async def to_ext(self, event_type, event):
         await self.sonoro.sio.emit(event_type, event)
@@ -47,3 +54,6 @@ class Ext:
         self.sonoro.sio.on('use_stt', self.use_stt)
         self.sonoro.sio.on('use_tts', self.use_tts)
         self.sonoro.sio.on('get_character_response', self.get_character_response)
+
+        self.sonoro.sio.on('disconnect_ext', self.disconnect_ext)
+        

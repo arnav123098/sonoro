@@ -105,8 +105,13 @@ class TUI:
     def chat_loop(self):
         print(f'{self.session.character} joined the chat')
 
+        self.responded = True
         try:
             while True:
+                if not self.responded:
+                    time.sleep(0.5)
+                    continue
+
                 message = input('^_^: ')
                 if message == 'exit': break
 
@@ -116,6 +121,7 @@ class TUI:
                     'event_name': 'user_message',
                     'content': data
                 }))
+                self.responded = False
 
         except KeyboardInterrupt: pass
         finally:
@@ -125,6 +131,7 @@ class TUI:
 
     def to_ui(self, content):
         print(f"{self.session.character}: {content['message']}")
+        self.responded = True
 
     async def default_from_char(self, res):
         action, content = res['action'], res['content']

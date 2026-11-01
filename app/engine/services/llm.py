@@ -257,6 +257,7 @@ class LLM:
         return res
 
     def save_recent(self):
+        if self.memory is None: return
         print(f"[memory] saving recent context for {self.context.curr_character}")
 
         try:
@@ -274,6 +275,7 @@ class LLM:
             f.write(json.dumps(all_recent, indent=2))
 
     def save_mem(self):
+        if self.memory is None: return
         if self.context.recent: self.save_recent()
 
         if not self.context.curr_character or not self.memory: return
