@@ -7,8 +7,6 @@ Sonoro lets you talk to your favorite game or anime characters. You can also mak
 - 3D model (vrm)
 - Voicelines (at least one)
 
-That's it!
-
 ## Installation (ps: it's not completed and i'm lazy so i'm not setting up serving web ui from python anytime too soon!)
 Make sure you have git and bun installed.
 
