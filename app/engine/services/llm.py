@@ -181,6 +181,14 @@ class LLM:
                     "message": "OOPS! You've probably hit your rate limit!"
                 }
             }
+
+        if res == '_silence':
+            return {
+                "action": "interaction",
+                "content": {
+                    "message": "*Remained quiet*"
+                }
+            }
         
         res = res.strip('```').strip('json')
 
