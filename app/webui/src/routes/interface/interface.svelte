@@ -47,11 +47,16 @@
     let audioQueue = [];
 
     let busy = $state(false);
+    let player = $state(null);
 
     const handleInteraction = async (data) => {
         console.log('interaction: ', data.at(-1));
 
-        if (data.at(-1).author != 'me') busy = false;
+        if (data.at(-1)) {
+            if (data.at(-1).author != 'me') busy = false;
+        } else {
+            busy = false;
+        }
 
         messages.replaceChildren();
 
@@ -68,6 +73,19 @@
         if (animation) globals.animator.playAnimation(animation);
     };
 
+    const handlePlayAnimation = async (animName) => {
+        console.log('playing animation: ', animName);
+        globals.animator.playAnimation(animName);
+    }
+
+    const handleStopSpeaking = async () => {
+        console.log('stopped speaking (interrupted)')
+        if (playingVoice && player) {
+            player.pause();
+            player.currentTime = 0;
+        }
+    }
+
     const handleVoice = (audio) => {
         console.log('received audio');
         if (playingVoice) {
@@ -76,7 +94,7 @@
             const blob = new Blob([audio], { type: "audio/wav" });
             const url = URL.createObjectURL(blob);
 
-            const player = new Audio(url);
+            player = new Audio(url);
             lipsyncManager.connectAudio(player);
 
             playingVoice = true;
@@ -153,6 +171,8 @@
         globals.conn.on('playVoice', handleVoice);
         globals.conn.on('walkIn', handleWalkIn)
         globals.conn.on('walkOut', handleWalkOut);
+        globals.conn.on('play_animation', handlePlayAnimation);
+        globals.conn.on('stop_speaking', handleStopSpeaking);
 
         globals.bgImg = globals.current_char.theme.chat_background || '/chat.jpg';
 
@@ -163,6 +183,8 @@
             globals.conn.off('playVoice', handleVoice);
             globals.conn.off('walkIn', handleWalkIn)
             globals.conn.off('walkOut', handleWalkOut);
+            globals.conn.off('play_animation', handlePlayAnimation);
+            globals.conn.off('stop_speaking', handleStopSpeaking);
             document.removeEventListener('keydown', handleEnterPress);
         }
     });

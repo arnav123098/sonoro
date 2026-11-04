@@ -32,6 +32,14 @@ class Ext:
         else:
             self.sonoro.interface.to_ui(content)
 
+    async def play_animation(self, sid, animation_name):
+        if self.sonoro.interface_type == 'webui':
+            await self.sonoro.interface.play_animation(animation_name)
+
+    async def stop_speaking(self, sid):
+        if self.sonoro.interface_type == 'webui':
+            await self.sonoro.interface.stop_speaking()
+
     async def use_stt(self, sid, data):
         await self.sonoro.sio.emit('task_res', (data['task_id'], self.sonoro.services.stt.stt(data['args'])), to=sid)
 

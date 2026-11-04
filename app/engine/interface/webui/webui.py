@@ -75,6 +75,27 @@ class WebUI:
 
     # SONORO HANDLERS AND INTERACTION
     async def from_user(self, sid, data):
+        if data['content'] == '/stop_speaking':
+            await self.stop_speaking()
+            await self.sio.emit('interaction', self.chat)
+            return
+
+        elif data['content'].startswith('/play_animation:'):
+            animName = data['content'].split(':')[1]
+
+            if self.chat:
+                last = self.chat[-1]
+                last['animation'] = animName
+                chat = self.chat[:-1] + [last]
+            
+
+                await self.sio.emit('interaction', chat)
+            else:
+                await self.sio.emit('interaction', [])
+                await self.play_animation(animName)
+
+            return
+
         if data['type'] == 'audio' and self.services.stt is not None:
             data['content'] = self.services.stt.stt(data['content']).text
 
@@ -95,12 +116,18 @@ class WebUI:
         if content.get('speak', True) and self.services.tts is not None:
             first = True
             for audio in self.services.tts.tts(content['message'], content.get('expression', 'neutral')):
-                await self.sio.emit('playVoice', audio, to=self.mv.char_pos)
                 if first:
                     await self.sio.emit('interaction', self.chat)
                     first = False
+                await self.sio.emit('playVoice', audio, to=self.mv.char_pos)
         else:
             await self.sio.emit('interaction', self.chat)
+
+    async def play_animation(self, animation_name):
+        await self.sio.emit('play_animation', animation_name)
+
+    async def stop_speaking(self):
+        await self.sio.emit('stop_speaking')
 
     async def default_from_char(self, res):
         action, content = res['action'], res['content']
