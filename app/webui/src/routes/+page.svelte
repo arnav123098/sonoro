@@ -43,17 +43,15 @@
         });
 
         globals.conn.on("connect", () => {
-            console.log('sonoro engine connected')
+            console.log('sonoro engine connected');
             globals.is_conn = true;
         });
         globals.conn.on("disconnect", (reason) => {
-            console.log('sonoro engine disconnected: ', reason);
-            globals.is_conn = false;
-            // window.location.reload();
+            window.location.reload();
         });
         globals.conn.on('info', (data) => {
             window.alert(data?.message);
-        })
+        });
 
         globals.conn.on('loadConfig', handleLoadConfig);
         globals.conn.emit('getConfig');

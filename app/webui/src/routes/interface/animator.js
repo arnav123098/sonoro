@@ -45,12 +45,23 @@ export class Animator {
             viseme_U:  'ou'
         };
         this.currentExpression = null;
+
+        this.mixer.addEventListener('finished', (e) => e.action === this.actions[this.currentAnimation] && this.playAnimation('idle'));
+    }
+
+    dispose() {
+        this.mixer.removeEventListener(
+            'finished',
+            this.onAnimationFinished
+        );
     }
 
     update(deltaTime) {
-        if (this.mixer) {
-            this.mixer.update(deltaTime);
-        }
+        const start = performance.now();
+
+        if (this.mixer) this.mixer.update(deltaTime);
+
+        const mixerTime = performance.now();
 
         if (this.walkDirection !== 0) {
             this.model.scene.position.x += this.walkDirection * this.moveSpeed * deltaTime;
@@ -65,6 +76,14 @@ export class Animator {
                 if (this.walkDirection === -1 && this.model.scene.position.x <= 0) this.stopWalking();
             }
         }
+
+        const end = performance.now();
+
+        this.profile = {
+            mixer: mixerTime - start,
+            walking: end - mixerTime,
+            total: end - start
+        };
     }
 
     checkIfOffscreen() {
@@ -93,15 +112,10 @@ export class Animator {
         const fbx = await fbxLoader.loadAsync(path);
         const clip = remapMixamoAnimationToVrm(this.model, fbx);
         const action = this.mixer.clipAction(clip);
+        
         if (actionName !== 'idle') {
             action.setLoop(THREE.LoopOnce);
             action.clampWhenFinished = true;
-
-            this.mixer.addEventListener('finished', (e) => {
-                if (e.action === action) {
-                    this.playAnimation('idle');
-                }
-            });
         }
         this.actions[actionName] = action;
     }
@@ -127,20 +141,13 @@ export class Animator {
         const nextAction = this.actions[name];
         if (!nextAction) return;
 
+        nextAction.reset();
+        nextAction.enabled = true;
+        nextAction.play();
+
         if (this.currentAnimation) {
             const currentAction = this.actions[this.currentAnimation];
-
-            nextAction.reset();
-            nextAction.enabled = true;
-            
-            // use idle as a bridge to fade
-            const idle = this.actions['idle'];
-            idle.crossFadeFrom(currentAction, 0.5, true);
-            idle.play();
-            nextAction.crossFadeFrom(idle, 0.5, true);
-            nextAction.play();
-        } else {
-            nextAction.play();
+            nextAction.crossFadeFrom(currentAction, 0.5, true);
         }
 
         this.currentAnimation = name;

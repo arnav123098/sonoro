@@ -56,7 +56,7 @@
             window.alert('Character with that name already exists');
         } else if (newCharName) {
             globals.conn.emit('getCharacterData', newCharName, true);
-            setTimeout(() => globals.conn.emit('getCharacters'), 500); // maybe fragile. fix it later.
+            setTimeout(() => globals.conn.emit('getCharacters'), 500);
         }
 
         newCharMenuVisible = false;
@@ -76,6 +76,11 @@
         globals.conn.on('listCharacters', handleListCharacters);
         globals.conn.on('selectedCharacter', handleSelectedCharacter);
         globals.conn.emit('getCharacters');
+
+        return () => {
+            globals.conn.off('listCharacters', handleListCharacters);
+            globals.conn.off('selectedCharacter', handleSelectedCharacter);
+        }
     });
 </script>
 

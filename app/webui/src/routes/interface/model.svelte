@@ -7,6 +7,8 @@
     import { onMount } from 'svelte';
     import { globals } from '$lib/index.svelte';
 
+    let log = false;
+
     let { model_path } = $props();
     let canvas;
     let renderer, scene, camera, loader;
@@ -14,6 +16,8 @@
     let timer = new THREE.Timer();
     timer.connect(document);
     let animator;
+
+    let lastTime = 0, frames = 0, animationFrameId;
 
     onMount(() => {
         scene = getScene();
@@ -56,42 +60,69 @@
             );
 
             animate();
-
             globals.conn.on('loadAnimations', setupAnimator);
 
-            return () => {
-                console.log("Destroying model viewer");
-
-                globals.animator = null;
-
-                renderer.dispose();
-                window.removeEventListener("resize", handleResize);
-            };
+            console.log({
+                dpr: window.devicePixelRatio,
+                resolution: [
+                    renderer.domElement.width,
+                    renderer.domElement.height
+                ]
+            });
         };
 
         function animate() {
-            requestAnimationFrame(animate);
+            animationFrameId = requestAnimationFrame(animate);
 
             timer.update();
+            frames++;
 
             const deltaTime = timer.getDelta()
 
             if (model instanceof VRM) model.update(deltaTime);
             if (animator) animator.update(deltaTime);
 
+            const now = performance.now();
+            if (now - lastTime >= 4000 && log) {
+                const fps = frames * 1000 / (now - lastTime);
+                frames = 0;
+
+                console.log({
+                    fps: Math.round(fps),
+                    calls: renderer.info.render.calls,
+                    triangles: renderer.info.render.triangles,
+                    geometries: renderer.info.memory.geometries,
+                    textures: renderer.info.memory.textures,
+                    animator: globals.animator?.profile
+                });
+
+                lastTime = now;
+            }
+
             renderer.render(scene, camera);
         }
 
-        function handleResize() {
-            camera.aspect = window.innerWidth / window.innerHeight;
+        const canvasResizeObserver = new ResizeObserver(() => {
+            const width = canvas.clientWidth;
+            const height = canvas.clientHeight;
+
+            camera.aspect = width / height;
             camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        };
-        window.addEventListener('resize', handleResize);
+
+            renderer.setSize(width, height, false);
+        });
+
+        canvasResizeObserver.observe(canvas);
 
         return () => {
-            window.removeEventListener('resize', handleResize);
+            cancelAnimationFrame(animationFrameId);
+            globals.animator.dispose();
+            globals.animator = null;
+            globals.conn.off('loadAnimations', setupAnimator);
+
             renderer.dispose();
+
+            canvasResizeObserver.disconnect();
         };
     });
 
@@ -106,25 +137,21 @@
     }
 
     function getCamera() {
-        const camera = new THREE.PerspectiveCamera(
-        40,
-        window.innerWidth / window.innerHeight,
-        0.1,
-        100
-        );
+        const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 100);
         camera.position.set(0, 1.25, 1.85);
         return camera;
     }
 
     function getRenderer() {
         const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
-        renderer.outputEncoding = THREE.SRGBColorSpace;
+        renderer.setPixelRatio(1);
+        renderer.outputColorSpace = THREE.SRGBColorSpace;
         return renderer;
     }
 
     async function setupAnimator(data) {
+        if (!animator) return;
+
         animator.animationPaths = data.animations;
 
         // LOAD ALL ACTIONS
@@ -142,7 +169,8 @@
 
 <style>
   canvas {
+    display: block;
     width: 100%;
-    height: 70%;
+    height: 100%;
   }
 </style>

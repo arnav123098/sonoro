@@ -167,24 +167,29 @@
     };
 
     onMount(() => {
+        globals.bgImg = globals.current_char.theme.chat_background || '/chat.jpg';
+        
         globals.conn.on('interaction', handleInteraction);
         globals.conn.on('playVoice', handleVoice);
+
         globals.conn.on('walkIn', handleWalkIn)
         globals.conn.on('walkOut', handleWalkOut);
+
         globals.conn.on('play_animation', handlePlayAnimation);
         globals.conn.on('stop_speaking', handleStopSpeaking);
-
-        globals.bgImg = globals.current_char.theme.chat_background || '/chat.jpg';
 
         document.addEventListener('keydown', handleEnterPress);
 
         return () => {
             globals.conn.off('interaction', handleInteraction);
             globals.conn.off('playVoice', handleVoice);
+
             globals.conn.off('walkIn', handleWalkIn)
             globals.conn.off('walkOut', handleWalkOut);
+
             globals.conn.off('play_animation', handlePlayAnimation);
             globals.conn.off('stop_speaking', handleStopSpeaking);
+
             document.removeEventListener('keydown', handleEnterPress);
         }
     });
@@ -258,8 +263,8 @@
     }
 
     #threeD {
-        width: 75%;
-        height: 100%;
+        width: 75vw;
+        height: 100vh;
     }
 
     #text-ui {
