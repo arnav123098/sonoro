@@ -186,7 +186,7 @@ class LLM:
             return {
                 "action": "interaction",
                 "content": {
-                    "message": "*Remained quiet*"
+                    "message": "_silence"
                 }
             }
         
@@ -236,12 +236,13 @@ class LLM:
         self.context.convo_context = self.context.convo_context[:1] # might be kinda aggressive
 
     def get_mem(self):
+        if not self.context.convo_context[1:]: return
+        
         convo = 'CONVERSATION:\n'
         for message in self.context.convo_context[1:]:
             convo += f"{'user' if message['role'] == 'user' else self.context.curr_character}: {message['content']}\n"
 
         convo += f'\n\nSUMMARY OF RECENT TOPICS:\n{self.context.recent}'
-        if not convo: return
 
         context = [
             {
@@ -266,7 +267,6 @@ class LLM:
 
     def save_recent(self):
         if self.memory is None: return
-        print(f"[memory] saving recent context for {self.context.curr_character}")
 
         try:
             with open('recent.json', 'r') as f:
@@ -282,13 +282,13 @@ class LLM:
         with open('recent.json', 'w') as f:
             f.write(json.dumps(all_recent, indent=2))
 
+        print(f"[memory] saving recent context for {self.context.curr_character}")
+
     def save_mem(self):
-        if self.memory is None: return
+        if not self.memory or not self.context.curr_character: return
         if self.context.recent: self.save_recent()
 
-        if not self.context.curr_character or not self.memory: return
         to_save = self.get_mem()
-
         if to_save is not None:
             print(f"[memory] saving memory for {self.context.curr_character}...")
 

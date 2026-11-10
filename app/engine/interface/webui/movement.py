@@ -5,19 +5,20 @@ class Movement:
         self.char_pos = None
 
     def reset(self):
-        self.char_conn = []
+        self.char_conn.clear()
         self.char_pos = None
 
     async def setup(self, sid):
-        self.char_conn.append(sid)
+        if sid not in self.char_conn: self.char_conn.append(sid)
         if len(self.char_conn) == 1:
             await self.manage_char_pos(1)
         else:
             await self.manage_char_pos()
 
     async def remove(self, sid):
-        if sid in self.char_conn: self.char_conn.remove(sid)
-        await self.manage_char_pos(1, deselect=True)
+        if sid in self.char_conn:
+            self.char_conn.remove(sid)
+            await self.manage_char_pos(1, deselect=True)
 
     async def walk_out(self, dir):
         if dir is None: return
@@ -44,5 +45,5 @@ class Movement:
 
         # print(self.char_conn, prev, new)
 
-        if prev == new and length != 1: return
+        if prev == new: return
         if dir or deselect: await self.sio.emit('walkIn', dir, to=new)
