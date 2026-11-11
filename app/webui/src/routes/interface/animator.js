@@ -9,9 +9,9 @@ export class Animator {
         this.mixer = model.mixer;
         this.camera = camera;
 
-        this.modelBox = new THREE.Box3();
-        this.frustum = new THREE.Frustum();
-        this.viewProjectionMatrix = new THREE.Matrix4();
+        this.modelBounds = new THREE.Box3().setFromObject(this.model.scene);
+        this.modelLeft = this.modelBounds.min.x - this.model.scene.position.x;
+        this.modelRight = this.modelBounds.max.x - this.model.scene.position.x;
 
         this.walkDirection = 0; // -1 for left | 0 for none | 1 for right
         this.moveSpeed = 0;
@@ -20,6 +20,8 @@ export class Animator {
         this.animationPaths = {}
         this.actions = {};
         this.currentAnimation = null;
+
+        this.factor = -3
 
         this.action_list = Object.keys(this.actions);
 
@@ -57,53 +59,54 @@ export class Animator {
     }
 
     update(deltaTime) {
-        const start = performance.now();
+        // const start = performance.now();
 
         if (this.mixer) this.mixer.update(deltaTime);
 
-        const mixerTime = performance.now();
+        // const mixerTime = performance.now();
 
         if (this.walkDirection !== 0) {
             this.model.scene.position.x += this.walkDirection * this.moveSpeed * deltaTime;
 
-            if (this.walkTo === 1 && this.checkIfOffscreen(this.model.scene)) {
+            if (this.walkTo === 1 && this.checkIfOffscreen()) {
                 globals.conn.emit('walkedOut', this.walkDirection);
-                this.stopWalking(this.walkDirection*0.1);
+                this.stopWalking(this.walkDirection * 0.2);
             }
 
             if (this.walkTo === 0) {
                 if (this.walkDirection === 1 && this.model.scene.position.x >= 0) this.stopWalking();
+
                 if (this.walkDirection === -1 && this.model.scene.position.x <= 0) this.stopWalking();
             }
         }
 
-        const end = performance.now();
+        // const end = performance.now();
 
-        this.profile = {
-            mixer: mixerTime - start,
-            walking: end - mixerTime,
-            total: end - start
-        };
+        // this.profile = {
+        //     mixer: mixerTime - start,
+        //     walking: end - mixerTime,
+        //     total: end - start
+        // };
     }
 
     checkIfOffscreen() {
-        if (!this.model.scene) return false;
+        const position = this.model.scene.position;
 
-        // 1. Update the camera matrices
-        this.viewProjectionMatrix.multiplyMatrices(
-            this.camera.projectionMatrix,
-            this.camera.matrixWorldInverse
-        );
-        this.frustum.setFromProjectionMatrix(this.viewProjectionMatrix);
+        const left = new THREE.Vector3(
+            position.x + this.modelLeft,
+            position.y,
+            position.z
+        ).project(this.camera);
 
-        // 2. Expand the Bounding Box to include the model and all its children
-        // This calculates the literal "box" the character fits in right now
-        this.modelBox.setFromObject(this.model.scene);
-        
-        // 3. Check if the frustum intersects this box
-        const isOnScreen = this.frustum.intersectsBox(this.modelBox);
-        
-        return !isOnScreen;
+        const right = new THREE.Vector3(
+            position.x + this.modelRight,
+            position.y,
+            position.z
+        ).project(this.camera);
+
+        return this.walkDirection === 1
+            ? left.x > 1
+            : right.x < -1;
     }
 
     async loadAction(actionName) {
@@ -113,7 +116,9 @@ export class Animator {
         const clip = remapMixamoAnimationToVrm(this.model, fbx);
         const action = this.mixer.clipAction(clip);
         
-        if (actionName !== 'idle') {
+        if (actionName === 'walking') {
+            action.setLoop(THREE.LoopRepeat, Infinity);
+        } else if (actionName !== 'idle') {
             action.setLoop(THREE.LoopOnce);
             action.clampWhenFinished = true;
         }
@@ -159,19 +164,20 @@ export class Animator {
 
     walkIn(dir) {
         this.model.scene.visible = true;
-        this.model.scene.position.x = -dir*1.2;
+        this.model.scene.position.x = dir * this.factor;
+        this.factor = -1.2
         this.startWalking(dir, 0);
     }
 
     startWalking(direction, to) {
         // direction: 1 for Right, -1 for Left
+        this.playAnimation('walking');
         this.walkDirection = direction;
         this.moveSpeed = 1.1;
         const targetRotation = (direction === -1) ? Math.PI / 2 : -Math.PI / 2;
         this.model.scene.rotation.y = targetRotation;
 
         this.walkTo = to;
-        this.playAnimation('walking');
     }
 
     stopWalking(extra_width=0) {

@@ -21,12 +21,15 @@ class Movement:
             await self.manage_char_pos(1, deselect=True)
 
     async def walk_out(self, dir):
+        if len(self.char_conn) == 1:
+            return {'event_name': 'cannot walk out of the screen', 'content': 'no other screen to go to'}
+        
         if dir is None: return
         dn = 1 if dir == 'right' else -1
 
         await self.sio.emit('walkOut', dn, to=self.char_pos)
 
-        return {'event_name': 'walking out of the current screen to the next one', 'content': 'on the way to next screen'}
+        return {'event_name': 'walking out of the current screen to the next one', 'content': 'successfully executed'}
 
     async def manage_char_pos(self, dir=0, deselect=False):
         prev = self.char_pos

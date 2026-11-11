@@ -17,7 +17,8 @@
     timer.connect(document);
     let animator;
 
-    let lastTime = 0, frames = 0, animationFrameId;
+    // let lastTime = 0, frames = 0
+    let animationFrameId;
 
     onMount(() => {
         scene = getScene();
@@ -38,8 +39,7 @@
                 gltf => {
                     const vrm = gltf.userData.vrm;
                     model = vrm;
-                    model.scene.position.x = -1.5;
-                    model.scene.visible = false;
+                    model.scene.position.x = -2.5;
                     scene.add(vrm.scene);
 
                     vrm.scene.rotation.y = Math.PI;
@@ -75,29 +75,29 @@
             animationFrameId = requestAnimationFrame(animate);
 
             timer.update();
-            frames++;
+            // frames++;
 
             const deltaTime = timer.getDelta()
 
             if (model instanceof VRM) model.update(deltaTime);
             if (animator) animator.update(deltaTime);
 
-            const now = performance.now();
-            if (now - lastTime >= 4000 && log) {
-                const fps = frames * 1000 / (now - lastTime);
-                frames = 0;
+            // const now = performance.now();
+            // if (now - lastTime >= 4000 && log) {
+            //     const fps = frames * 1000 / (now - lastTime);
+            //     frames = 0;
 
-                console.log({
-                    fps: Math.round(fps),
-                    calls: renderer.info.render.calls,
-                    triangles: renderer.info.render.triangles,
-                    geometries: renderer.info.memory.geometries,
-                    textures: renderer.info.memory.textures,
-                    animator: globals.animator?.profile
-                });
+            //     console.log({
+            //         fps: Math.round(fps),
+            //         calls: renderer.info.render.calls,
+            //         triangles: renderer.info.render.triangles,
+            //         geometries: renderer.info.memory.geometries,
+            //         textures: renderer.info.memory.textures,
+            //         animator: globals.animator?.profile
+            //     });
 
-                lastTime = now;
-            }
+            //     lastTime = now;
+            // }
 
             renderer.render(scene, camera);
         }
@@ -138,13 +138,13 @@
 
     function getCamera() {
         const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 100);
-        camera.position.set(0, 1.25, 1.85);
+        camera.position.set(0, 1.25, 2);
         return camera;
     }
 
     function getRenderer() {
         const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
-        renderer.setPixelRatio(1);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
         renderer.outputColorSpace = THREE.SRGBColorSpace;
         return renderer;
     }

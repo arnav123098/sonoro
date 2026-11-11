@@ -168,7 +168,11 @@ class WebUI:
         character_list = {n: self.to_url((f'{n}/images/{p}' if p is not None else f'a-chan/images/pfp.png'), 'characters') for n, p in self.store.characters.list_characters().items()}
 
         if self.mv.char_conn: # one character at a time
-            character_list = {n: p for n, p in character_list.items() if n == self.session.character['name']}
+            character = self.session.character
+            if character is None:
+                self.mv.reset()
+            else:
+                character_list = {n: p for n, p in character_list.items() if n == character['name']}
 
         await self.sio.emit('listCharacters', character_list, to=sid)
 
@@ -195,6 +199,11 @@ class WebUI:
                 'vrm_model': self.to_url(f"{name}/models/{self.session.character['vrm_model']}", 'characters'),
                 'theme': self.session.character['theme']
             }, to=sid)
+
+            if self.chat:
+                chat = self.chat
+                chat[-1]['restore_chat'] = True # so interaction's not played and only history is restored
+                await self.sio.emit('interaction', self.chat)
         else:
             if not self.session.user_ready:
                 await self.sio.emit('info', {'message': f'Cannot proceed. Open settings and setup Sonoro properly first.'})

@@ -8,21 +8,18 @@
                 globals.bgImg = globals.defaultbg;
                 globals.current_char = null;
                 globals.conn.emit('deselectCharacter');
-            }}>{'<-'}</button>
+            }}>{'<'}</button>
             <br><br>
         </div>
         <ul bind:this={messages} id='messages'></ul>
 
-        <div>
-        <input bind:value={userMessage}>
-        <button id='send' onclick={() => {
-            sendMessage(userMessage);
-            userMessage = '';
-        }}>send</button>
-        </div>
-
-        <div>
-        <button onclick={!isRec ? startRec : stopRec}>{!isRec ? 'voice message' : 'send voice message'}</button>
+        <div id='input-area'>
+            <textarea bind:value={userMessage}></textarea>
+            <button id='send' class='send-btn' onclick={() => {
+                sendMessage(userMessage);
+                userMessage = '';
+            }}>➤</button>
+            <button class='send-btn' onmousedown={!isRec && startRec} onmouseup={isRec && stopRec}>၊၊||၊</button>
         </div>
     </div>
 </div>
@@ -50,13 +47,8 @@
     let player = $state(null);
 
     const handleInteraction = async (data) => {
-        console.log('interaction: ', data.at(-1));
-
-        if (data.at(-1)) {
-            if (data.at(-1).author != 'me') busy = false;
-        } else {
-            busy = false;
-        }
+        const lastMessage = data?.at(-1);
+        busy = lastMessage?.author === 'me';
 
         messages.replaceChildren();
 
@@ -69,8 +61,12 @@
         
         messages.scrollTop = messages.scrollHeight;
 
-        const animation = data.at(-1)?.animation;
-        if (animation) globals.animator.playAnimation(animation);
+        if (!lastMessage?.restore_chat) {
+            console.log('interaction: ', lastMessage);
+
+            const animation = lastMessage?.animation;
+            if (animation) globals.animator.playAnimation(animation);
+        }
     };
 
     const handlePlayAnimation = async (animName) => {
@@ -146,6 +142,8 @@
             messages.appendChild(li);
         }
 
+        messages.scrollTop = messages.scrollHeight;
+
         globals.conn.emit('userMessage', {
             type: audio ? 'audio' : 'text',
             content: content
@@ -162,7 +160,7 @@
     };
 
     const handleWalkOut = async (dir) => {
-        console.log('walkOut', dir)
+        console.log('walkOut', dir);
         globals.animator.walkOut(dir);
     };
 
@@ -184,7 +182,7 @@
             globals.conn.off('interaction', handleInteraction);
             globals.conn.off('playVoice', handleVoice);
 
-            globals.conn.off('walkIn', handleWalkIn)
+            globals.conn.off('walkIn', handleWalkIn);
             globals.conn.off('walkOut', handleWalkOut);
 
             globals.conn.off('play_animation', handlePlayAnimation);
@@ -194,9 +192,12 @@
         }
     });
 
+    let mvSetup = false;
     $effect(() => {
-        if (globals.animator && globals.animator.actions) {
+        if (globals.animator && globals.animator.actions && !mvSetup) {
+            globals.animator.model.scene.visible = true;
             setTimeout(() => globals.conn.emit('movementSetup'), 1000);
+            mvSetup = true;
         }
     });
 
@@ -284,6 +285,15 @@
         padding: 2rem;
     }
 
+    .send-btn {
+        margin-right: -0.3rem;
+    }
+
+    #input-area {
+        display: flex;
+        gap: 0.5rem;
+    }
+
     :global(#interface *) {
         color: black;
     }
@@ -337,5 +347,18 @@
 
     #messages::-webkit-scrollbar-thumb:hover {
         background: rgba(255,255,255,.4);
+    }
+
+    textarea {
+        background-color: transparent;
+        field-sizing: content;
+        width: 85%;
+        max-width: 200px;
+        min-width: 4rem;
+        padding: 0.5rem;
+        border: solid 1px rgb(0, 140, 255);
+        border-radius: 0.5rem;
+        margin-bottom: 1rem;
+        resize: none;
     }
 </style>

@@ -178,7 +178,8 @@ class LLM:
             return {
                 "action": "interaction",
                 "content": {
-                    "message": "OOPS! You've probably hit your rate limit!"
+                    "message": "Oops! You've probably hit your rate limit!",
+                    "speak": False
                 }
             }
 
