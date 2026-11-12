@@ -2,6 +2,8 @@ import inspect
 import asyncio
 import time
 
+# chat works but rest of the tui stuff is not done yet
+
 class TUI:
     def __init__(self, store, services):
         self.services = services
@@ -87,8 +89,10 @@ class TUI:
 
         while self.session.character is None:
             try:
-                i = int(input('Select character by index: '))
+                i = input('Select character by index: ')
                 if i == 'exit': return
+
+                i = int(i)
 
                 self.session.character = characters[i]
                 print(f'Selected {self.session.character}')
@@ -117,11 +121,16 @@ class TUI:
 
                 data = {'type': 'text', 'content': message}
 
-                asyncio.run(self.on_from_user({
-                    'event_name': 'user_message',
-                    'content': data
-                }))
                 self.responded = False
+
+                try:
+                    asyncio.run(self.on_from_user({
+                        'event_name': 'user_message',
+                        'content': data
+                    }))
+                except Exception as e:
+                    print(f'[TUI Error] {e}')
+                    self.responded = True
 
         except KeyboardInterrupt: pass
         finally:
@@ -130,7 +139,7 @@ class TUI:
             self.services.llm.save_mem()
 
     def to_ui(self, content):
-        print(f"{self.session.character}: {content['message']}")
+        print(f"{self.session.character}: {content['message'] if content['message'] != '_silence' else '*Remained quiet*'}")
         self.responded = True
 
     async def default_from_char(self, res):

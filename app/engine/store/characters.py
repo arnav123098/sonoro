@@ -39,12 +39,25 @@ class CharacterStore:
     def __init__(self, dir: Path):
         self.dir = dir
 
+        # cache
+        self.character_list = None
+
     def list_characters(self) -> dict:
-        return {
-            name: self.get_config(name).model_dump().get('pfp')
-            for name in
-            [f.name for f in (self.dir).iterdir() if f.is_dir()]
+        if self.character_list is not None:
+            return self.character_list
+        
+        fnames = [f.name for f in (self.dir).iterdir() if f.is_dir()]
+
+        names = [self.get_config(name).name for name in fnames]
+        pfps = [self.get_config(name).model_dump().get('pfp') for name in fnames]
+
+        self.character_list = {
+            name: pfp
+            for name, pfp in
+            zip(names, pfps)
         } # {name: pfp...}
+
+        return self.character_list
 
     def get_character(self, name: str, create: bool = False) -> Character | None:
         char_dir = self.dir / name
@@ -98,11 +111,15 @@ class CharacterStore:
             with open(char_dir / 'config.json', 'w', encoding='utf-8') as f:
                 f.write(config.model_dump_json(indent=2))
 
+            self.character_list = None
+
             return {'status': 0, 'message': f'Character saved successfully!'}
 
     def delete_character(self, name: str):
         path = self.dir / name
         shutil.rmtree(path)
+
+        self.character_list = None
     
     def upload_assets(self, name: str, assets: list[dict]) -> dict:
         char_path = self.dir / name

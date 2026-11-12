@@ -65,7 +65,7 @@
             console.log('interaction: ', lastMessage);
 
             const animation = lastMessage?.animation;
-            if (animation) globals.animator.playAnimation(animation);
+            if (animation && globals.animator.currentAnimation !== 'walking') globals.animator.playAnimation(animation);
         }
     };
 

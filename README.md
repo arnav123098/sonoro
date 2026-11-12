@@ -48,10 +48,9 @@ Open up two terminals in project root, activate venv and run.
 Just head to http://localhost:5173 in your browser to use it.
 
 You have to use your own API keys for the providers you'll be using for LLM, STT, TTS (only Kyutai Pocket TTS works for now) and for Tavily and ScraperAPI for web search and scraping tool.
-Personally, I've tested it with Groq (free tier btw).
+I use Groq (free tier btw).
 
-Recommended LLM: Qwen 27B
-(ps: i still have to work on the sys prompt. so don't worry. the characters are gonna sound more natural in the future!)
+Recommended LLM (and the one I use): Qwen 27B
 
 For starters, you can try chatting with A-chan, the default character.
 
@@ -60,22 +59,13 @@ As an example, I have Yinlin from Wuthering Waves in my sonoro.
 ![Yinlin example](https://github.com/arnav123098/sonoro/blob/main/example.png)
 
 ## ⚠️ Alpha software
-Sonoro is currently in early development. APIs, configuration, installation steps, and features may change frequently. Things will probably break.
-
-## Sonoro SDK (on the way)
-Soon, you'll be able to use Sonoro externally as a tool for letting your ai use a 3D model, voice and web search/scrape, song playing etc. Sonoro already has that thingy but I'm not marking it complete for now.
+Sonoro is currently in early development. APIs, configuration, installation steps, and features may change frequently. Things might break.
 
 ## TODOS
-- [x] music player tool
-- [x] tui
-- [x] settings, character maker interface
-- [x] convo examples
-- [x] chunk-wise tts generation to mask latency
-- [x] character walks from screen to screen
-- [x] sdk
-- [x] refine character personality and behavior
-- [x] better memory system
-- [x] some basic refinements in the ui
-- [ ] handling exceptions and edge cases (what a drag! so only basic ones for now)
-- [ ] finalize everything and create a release (beta)
+- [ ] more comprehensive music player (search, select and then play; downloads, playlists; follow artists)
+- [ ] complete remaining stuff in tui (settings page, edit character page, improved chat interface)
+- [ ] better and simpler memory framework
+- [ ] improve persona
+- [ ] create a release (.exe)
+- [ ] release SDK (package)
 ---

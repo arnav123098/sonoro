@@ -1,70 +1,8 @@
-from services.inst import default_sys, char_desc_inst, summarizer_inst, mem_save_inst
+from services.inst import char_desc_inst, summarizer_inst, mem_save_inst
 from openai import OpenAI
 import json
 import uuid
-from datetime import datetime
-from pathlib import Path
-
-class Context:
-    def __init__(self, interface_type, animation_paths):
-        self.convo_context, self.curr_character = [], ''
-
-        self.recent = {}
-
-        self.interface_type = interface_type
-        self.custom_sys = None
-        self.animation_paths = animation_paths
-
-    def get_time(self):
-        now = datetime.now()
-
-        date = now.strftime("%d-%m-%Y")
-        time = now.strftime("%H:%M")
-        day = now.strftime("%A") 
-
-        return {
-            'date': date,
-            'time': time,
-            'day': day
-        }
-
-    def select_character(self, config):
-        sys = self.make_character_sys(config)
-        self.reset_context(config['name'], sys)
-
-    def make_character_sys(self, config):
-        animation_list = [f.rstrip('.fbx') for f in (self.animation_paths or [])]
-
-        if self.custom_sys is not None:
-            sys = self.custom_sys(self.interface_type, config, animation_list)
-        else:
-            sys = default_sys(self.interface_type, config, animation_list)
-
-        return {
-            'role': 'system',
-            'content': sys
-        }
-
-    def reset_context(self, character_name='', sys=None):
-        self.convo_context = []
-        self.curr_character = character_name
-        if sys is not None: self.convo_context.append(sys)
-        
-        self.recent = {}
-        try:
-            with open('recent.json', 'r') as f:
-                self.recent = json.loads(f.read())[character_name]
-        except Exception: pass
-
-    def make_context(self, message, is_llm=False):
-        role = 'assistant' if is_llm else 'user'
-
-        self.convo_context.append({
-            'role': role,
-            'content': message
-        })
-
-        return self.convo_context
+from services.context import Context
 
 class LLM:
     def __init__(self, memory=None):
@@ -106,7 +44,7 @@ class LLM:
 
         if event_name == 'user_message': return event['content']['content']
 
-        content = {json.dumps(event['content'], indent=2)} if type(event['content']) == dict else event['content']
+        content = json.dumps(event['content'], indent=2) if type(event['content']) == dict else event['content']
 
         return f"[{event['event_name']}] {content}"
 
@@ -116,7 +54,7 @@ class LLM:
             messages=context,
         )
 
-        if "qwen" in self.model:
+        if self.model and "qwen" in self.model:
             args["reasoning_effort"] = "none"
 
         try:
@@ -153,22 +91,24 @@ class LLM:
         self.summarize_context()
         context = list(self.context.make_context(self.parse(event)))
 
-        info_content = f'Recent Conversation Summary:\n{json.dumps(self.context.recent, indent=2)}'
-
+        info_content = 'HELPFUL INFORMATION (avoid mentioning it. only use this for richer behavior.)'
         if self.memory:
             text = event['content']['content'] if event['event_name'] == 'user_message' else event['content']
             tags = list(set(tag for t in self.context.recent.values() for tag in t['tags'] if tag != 'none')) or None
             # print('tags: ', tags) # debug
+
             info_content += f"\nRelated Information from memory:\n{json.dumps(self.memory.react(self.context.curr_character, text, tags).get('memories'))}"
 
         now = self.context.get_time()
         info_content += f"\nTIME: {now['day'], now['date']} | {now['time']}"
 
-        info = {
+        content = info_content + f"\nEvent: {context[-1]['content']}"
+
+        curr = {
             'role': 'user',
-            'content': info_content
+            'content': content
         }
-        context = context[:-1] + [info] + [context[-1]]
+        context = context[:-1] + [curr]
         # # print('info: ', info) # debug
         # print('context: ', context) # debug
 
@@ -198,7 +138,7 @@ class LLM:
         self.context.make_context(res, is_llm=True)
         return json.loads(res)
 
-    def summarize_context(self, upto=6):
+    def summarize_context(self, upto=15):
         if len(self.context.convo_context) <= upto + 1: return # + 1 for sys
 
         convo = ''
@@ -207,6 +147,9 @@ class LLM:
 
         if not convo: return
 
+        ctx = {'convo': convo}
+        ctx = json.dumps(ctx, indent=2)
+
         context = [
             {
                 'role': 'system',
@@ -214,12 +157,10 @@ class LLM:
             },
             {
                 'role': 'user',
-                'content': json.dumps({
-                    'convo': convo,
-                    'existing_summary': self.context.recent
-                }, indent=2)
+                'content': f"CONTEXT:\n{ctx}\nBased on the context, describe the current situation and summarize the most important information that should be remembered for future reference in the current scenario. Be concise and focus on key details. It should be a chronological description of observations and events point-wise."
+                + ("Previous observation is also provided, so discard what's not needed anymore and include the relevant parts only." if self.context.recent else "")
             }
-        ]   
+        ]
 
         res = self.use_llm(context)
 
@@ -227,23 +168,40 @@ class LLM:
             print("[Exception] Couldn't summarize chat because of hitting rate limit")
             return
 
-        print(f'[memory] summarizing conversation...')
+        print(f'summarizing conversation...')
     
         res = res.strip('```').strip('json')
+
+        if self.context.interface_type == 'webui':
+            print(f'generated summary: {res}') # debug
 
         recent = json.loads(res)
         self.context.recent = recent
 
-        self.context.convo_context = self.context.convo_context[:1] # might be kinda aggressive
+        sys = self.context.convo_context[:1]
+
+        history = self.context.convo_context[1:]
+        if history and history[0]['content'].startswith('Recent Context:'):
+            history = history[1:]
+
+        recent_ctx = {'role': 'user', 'content': f"Recent Context:\n{json.dumps(recent, indent=2)}"}
+
+        self.context.convo_context = (
+            sys
+            + [recent_ctx]
+            + history[-4:]
+        )
 
     def get_mem(self):
-        if not self.context.convo_context[1:]: return
+        history = self.context.convo_context[1:]
+        if history and history[0]['content'].startswith('Recent Context:'):
+            history = history[1:]
+
+        if not history: return
         
         convo = 'CONVERSATION:\n'
-        for message in self.context.convo_context[1:]:
+        for message in history:
             convo += f"{'user' if message['role'] == 'user' else self.context.curr_character}: {message['content']}\n"
-
-        convo += f'\n\nSUMMARY OF RECENT TOPICS:\n{self.context.recent}'
 
         context = [
             {

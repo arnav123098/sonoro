@@ -48,7 +48,8 @@ export class Animator {
         };
         this.currentExpression = null;
 
-        this.mixer.addEventListener('finished', (e) => e.action === this.actions[this.currentAnimation] && this.playAnimation('idle'));
+        this.onAnimationFinished = (e) => e.action === this.actions[this.currentAnimation] && e.action !== this.actions.walking && this.playAnimation('idle');
+        this.mixer.addEventListener('finished', this.onAnimationFinished);
     }
 
     dispose() {
