@@ -1,8 +1,9 @@
-import inspect
 import asyncio
 import time
 
-# chat works but rest of the tui stuff is not done yet
+# only chat works in tui with usual tool use
+# tui is intended mainly for quick testing purposes
+# it's plain boring and minimal for the same purpose
 
 class TUI:
     def __init__(self, store, services):
@@ -11,18 +12,9 @@ class TUI:
         self.store = store
         self.tool_call = None
 
-        self.menus = {
-            'characters': self.characters_menu,
-            'settings': self.settings_menu
-        }
-
         self.session = None
 
         self.title = None
-        self.colors = {
-            'primary': None,
-            'secondary': None
-        }
 
         # SONORO HANDLERS
         self.on_from_user = None
@@ -30,80 +22,55 @@ class TUI:
         self.ext_id = None
 
     def start(self):
-        print('starting tui...')
-        time.sleep(2)
+        time.sleep(1)
 
-        if self.title is None: print('Sonoro TUI')
+        if self.title is None: print('\nSONORO TUI ^_^')
         else:
             print(self.title)
             print('powered by Sonoro')
 
         print()
 
-        print('Available menus: ')
-        for menu in self.menus.keys():
-            print(f'- {menu}')
-
         self.services.make_client(self.store.user.get_config().model_dump())
 
         try:
-            while True:
-                inp = input('>> ')
-                if inp == 'exit': break
-
-                if inp not in self.menus:
-                    print('invalid keyword entered')
-                    continue
-
-                self.menus[inp]()
+            self.characters_menu()
         except KeyboardInterrupt: pass
         finally:
             self.services.server.should_exit = True
             return
 
     def characters_menu(self):
-        print()
+        print('=== CHARACTERS ===')
         self.select_character()
-
-        options = {
-            'chat': self.chat_loop,
-            'edit': self.edit_character
-        }
-
-        print('Options: ')
-        for i, option in enumerate(options.keys()):
-            print(f'{i+1}: {option}')
-
-        while True:
-            inp = int(input('Choose an option: '))
-            if inp == 'exit': return
-
-            if inp in [1, 2]: break
-
-        print()
-        list(options.values())[inp-1]()
-
+        if self.session.character:
+            self.chat_loop()
+            self.characters_menu()
+        
     def select_character(self):
         characters = {i: name for i, name in enumerate(self.store.characters.list_characters().keys())}
         print('\n'.join([f'{i}: {name}' for i, name in characters.items()]))
 
         while self.session.character is None:
             try:
-                i = input('Select character by index: ')
+                i = input('\nSelect character by index: ')
                 if i == 'exit': return
 
                 i = int(i)
+
+                if i not in characters:
+                    print("Character doesn't exist\n")
+                    continue
 
                 self.session.character = characters[i]
                 print(f'Selected {self.session.character}')
 
                 char_config = self.store.characters.get_config(self.session.character)
 
-                self.colors['primary'] = char_config.theme.primary_color
-                self.colors['secondary'] = char_config.theme.secondary_color
-
                 self.services.llm.set_character(char_config.model_dump())
-            except Exception: print("Character doesn't exist")
+            except ValueError:
+                print('Invalid input. Try again.\n')
+                continue
             print()
         
     def chat_loop(self):
@@ -116,7 +83,7 @@ class TUI:
                     time.sleep(0.5)
                     continue
 
-                message = input('^_^: ')
+                message = input('>>> ')
                 if message == 'exit': break
 
                 data = {'type': 'text', 'content': message}
@@ -149,7 +116,3 @@ class TUI:
             self.to_ui(content)
         elif action == 'tool_call':
             await self.tool_call(content['tool'], content.get('function'), content.get('args'))
-
-    def settings_menu(self): pass
-
-    def edit_character(self): pass

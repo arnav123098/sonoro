@@ -20,16 +20,16 @@ Clone the repo
 
 Install Python packages
 ```
-  cd sonoro/engine
+  cd app/engine
   py -m venv .venv # create a virtual environment
   .venv/Scripts/activate # activate the venv
   pip install -r requirements.txt
 ```
 
-Run bun install in sonoro/ui (for now, the web ui runs on port 5173).
+Run bun install in app/webui (for now, the web ui runs on port 5173).
 From the project root, run the commands -
 ```
-  cd sonoro/webui
+  cd app/webui
   bun i # make sure you have bun installed
 ```
 
@@ -37,11 +37,11 @@ From the project root, run the commands -
 Open up two terminals in project root, activate venv and run.
 ```
   # in terminal 1 with .venv activated
-  cd sonoro/engine
-  python -m chat
+  cd app/engine
+  python main.py
 
   # in terminal 2
-  cd sonoro/webui
+  cd app/webui
   bun dev
 ```
 
@@ -63,7 +63,6 @@ Sonoro is currently in early development. APIs, configuration, installation step
 
 ## TODOS
 - [ ] more comprehensive music player (search, select and then play; downloads, playlists; follow artists)
-- [ ] complete remaining stuff in tui (settings page, edit character page, improved chat interface)
 - [ ] better and simpler memory framework
 - [ ] improve persona
 - [ ] create a release (.exe)
