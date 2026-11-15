@@ -66,6 +66,9 @@ class CharacterStore:
 
         if create: char_dir.mkdir(parents=True, exist_ok=True)
 
+        if create:
+            self.write_config(name, {'name': name})
+        
         config = self.get_config(name)
 
         (char_dir / 'models').mkdir(parents=True, exist_ok=True)
