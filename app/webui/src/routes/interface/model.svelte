@@ -2,6 +2,7 @@
     import * as THREE from 'three';
     import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
     import { VRMLoaderPlugin } from '@pixiv/three-vrm';
+    import { VRMLookAtQuaternionProxy } from '@pixiv/three-vrm-animation';
     import { VRM, VRMUtils } from "@pixiv/three-vrm";
     import { Animator } from './animator';
     import { onMount } from 'svelte';
@@ -48,7 +49,13 @@
                     const mixer = new THREE.AnimationMixer(vrm.scene);
                     vrm.mixer = mixer;
 
-                    animator = new Animator(vrm, camera);
+                    const lookAtProxy = new VRMLookAtQuaternionProxy(
+                        model.lookAt
+                    );
+                    lookAtProxy.name = 'lookAtQuaternionProxy';
+                    model.scene.add(lookAtProxy);
+
+                    animator = new Animator(vrm, camera, loader);
                     globals.animator = animator;
 
                     globals.conn.emit('getAnimations');

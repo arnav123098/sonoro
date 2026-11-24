@@ -49,6 +49,9 @@ class Ext:
     async def use_llm(self, sid, data):
         await self.sonoro.sio.emit('task_res', (data['task_id'], self.sonoro.services.llm.use_llm(data['args'])), to=sid)
 
+    async def use_tool(self, sid, tool_name, func, args):
+        await self.sonoro.tool_call(tool_name, func, args)
+
     async def get_character_response(self, sid, data):
         await self.sonoro.sio.emit('task_res', (data['task_id'], self.sonoro.services.llm.get_response(data['args'])), to=sid)
 
@@ -62,6 +65,6 @@ class Ext:
         self.sonoro.sio.on('use_stt', self.use_stt)
         self.sonoro.sio.on('use_tts', self.use_tts)
         self.sonoro.sio.on('get_character_response', self.get_character_response)
+        self.sonoro.sio.on('use_tool', self.use_tool)
 
         self.sonoro.sio.on('disconnect_ext', self.disconnect_ext)
-        

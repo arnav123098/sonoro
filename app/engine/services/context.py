@@ -30,8 +30,8 @@ class Context:
         self.reset_context(config['name'], sys)
 
     def make_character_sys(self, config):
-        animation_list = [Path(f).stem for f in (self.animation_paths or [])]
-
+        animation_list = list(self.animation_paths.keys())
+        
         if self.custom_sys is not None:
             sys = self.custom_sys(self.interface_type, config, animation_list)
         else:

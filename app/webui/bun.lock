@@ -6,6 +6,7 @@
       "name": "f2f-ui",
       "dependencies": {
         "@pixiv/three-vrm": "^3.5.5",
+        "@pixiv/three-vrm-animation": "^3.6.0",
         "recordrtc": "^5.6.2",
         "socket.io-client": "^4.8.3",
         "wawa-lipsync": "^0.0.2",
@@ -43,6 +44,8 @@
 
     "@pixiv/three-vrm": ["@pixiv/three-vrm@3.5.5", "", { "dependencies": { "@pixiv/three-vrm-core": "3.5.5", "@pixiv/three-vrm-materials-hdr-emissive-multiplier": "3.5.5", "@pixiv/three-vrm-materials-mtoon": "3.5.5", "@pixiv/three-vrm-materials-v0compat": "3.5.5", "@pixiv/three-vrm-node-constraint": "3.5.5", "@pixiv/three-vrm-springbone": "3.5.5" }, "peerDependencies": { "three": ">=0.137" } }, "sha512-RPXy7jYAXs704NIpZlosB0U2ENu21G9DrqGWdQgRe8dShaCo1ugpj+6BVPRCy91nt+MPMA96j5rbsSzEl0HlQA=="],
 
+    "@pixiv/three-vrm-animation": ["@pixiv/three-vrm-animation@3.6.0", "", { "dependencies": { "@pixiv/three-vrm-core": "3.6.0", "@pixiv/types-vrmc-vrm-1.0": "3.6.0", "@pixiv/types-vrmc-vrm-animation-1.0": "3.6.0" }, "peerDependencies": { "three": ">=0.137" } }, "sha512-p5vy5/4vjV/WUpARDG9QVZ14iaT4PGVL6rvoFH2ydqAvOX7d2sSL3C/H/8jy1iOUZIIt6Vqm4ODQaw3Uw0kKpQ=="],
+
     "@pixiv/three-vrm-core": ["@pixiv/three-vrm-core@3.5.5", "", { "dependencies": { "@pixiv/types-vrm-0.0": "3.5.5", "@pixiv/types-vrmc-vrm-1.0": "3.5.5" }, "peerDependencies": { "three": ">=0.137" } }, "sha512-jjaXZbMVRsk2HAGVxqDLmSJyGOJqbMcJpuTHR1TY/TN1FxiKdAzSqdr/ZUcczYipNf8IL9vDT9NX2XmWj+ybRQ=="],
 
     "@pixiv/three-vrm-materials-hdr-emissive-multiplier": ["@pixiv/three-vrm-materials-hdr-emissive-multiplier@3.5.5", "", { "dependencies": { "@pixiv/types-vrmc-materials-hdr-emissive-multiplier-1.0": "3.5.5" }, "peerDependencies": { "three": ">=0.137" } }, "sha512-XnHEqpY4ctYMucpeRcptdphOe0RrW7V5fUvojasD8Ja4MTjjrjCNFxsAvp3+HBkPZbkTM2sDCjJBJNzxN1scrA=="],
@@ -67,7 +70,9 @@
 
     "@pixiv/types-vrmc-springbone-extended-collider-1.0": ["@pixiv/types-vrmc-springbone-extended-collider-1.0@3.5.5", "", {}, "sha512-+6RxLaAvVguP7upjS/OT4viNPWvac1HBRQY1nmdvfYNQuCMdrMsCZqvy2af0Fcjnda4V9JbKFIpZDC0lrw1+uQ=="],
 
-    "@pixiv/types-vrmc-vrm-1.0": ["@pixiv/types-vrmc-vrm-1.0@3.5.5", "", {}, "sha512-WnemHHo2375BcBdumEhvrupZzsMSzTfdWlokmV9sUX2oC+OAQqJFfBjLF8ppkOhzHpl4MAPJqEfuhBJtNPm9ww=="],
+    "@pixiv/types-vrmc-vrm-1.0": ["@pixiv/types-vrmc-vrm-1.0@3.6.0", "", {}, "sha512-VnEAm+efvrjSclGYZqETXfuIQ3VJjbivsOxGT2M0qOMz6ZdlB66cI8w+NvO7DtM3xymu2+FhCKsVYCWP1+BYjw=="],
+
+    "@pixiv/types-vrmc-vrm-animation-1.0": ["@pixiv/types-vrmc-vrm-animation-1.0@3.6.0", "", { "dependencies": { "@pixiv/types-vrmc-vrm-1.0": "3.6.0" } }, "sha512-9bUxOY6IPKZ15AKKKPBi7d73GorZxkwbUXgH0NxhZD8qwwYuVjxtGgJlkA+UJX/O7cjuEjTO0bIger2d+nST1w=="],
 
     "@polka/url": ["@polka/url@1.0.0-next.29", "", {}, "sha512-wwQAWhWSuHaag8c4q/KN/vCoeOJYshAIvMQwD4GpSb3OiZklFfvAgmj0VCBBImRpuF/aFgIRzllXlVX93Jevww=="],
 
@@ -238,5 +243,11 @@
     "xmlhttprequest-ssl": ["xmlhttprequest-ssl@2.1.2", "", {}, "sha512-TEU+nJVUUnA4CYJFLvK5X9AOeH4KvDvhIfm0vV1GaQRtchnG0hgK5p8hw/xjv8cunWYCsiPCSDzObPyhEwq3KQ=="],
 
     "zimmerframe": ["zimmerframe@1.1.4", "", {}, "sha512-B58NGBEoc8Y9MWWCQGl/gq9xBCe4IiKM0a2x7GZdQKOW5Exr8S1W24J6OgM1njK8xCRGvAJIL/MxXHf6SkmQKQ=="],
+
+    "@pixiv/three-vrm-animation/@pixiv/three-vrm-core": ["@pixiv/three-vrm-core@3.6.0", "", { "dependencies": { "@pixiv/types-vrm-0.0": "3.6.0", "@pixiv/types-vrmc-vrm-1.0": "3.6.0" }, "peerDependencies": { "three": ">=0.137" } }, "sha512-7EkJVfcUQ6HSqktL0i1GgAW2x35HRF0d3KdGvgRWItkbt1E0rSmgyIG18FvoxMlLsZEsEPGp7UuB0oLAoyL9qA=="],
+
+    "@pixiv/three-vrm-core/@pixiv/types-vrmc-vrm-1.0": ["@pixiv/types-vrmc-vrm-1.0@3.5.5", "", {}, "sha512-WnemHHo2375BcBdumEhvrupZzsMSzTfdWlokmV9sUX2oC+OAQqJFfBjLF8ppkOhzHpl4MAPJqEfuhBJtNPm9ww=="],
+
+    "@pixiv/three-vrm-animation/@pixiv/three-vrm-core/@pixiv/types-vrm-0.0": ["@pixiv/types-vrm-0.0@3.6.0", "", {}, "sha512-dOdYg18m8Ag63DD2d12/PtzIRZmwrHF/tiBVo0hAqKDzw476Q+AGSgVWStC+SERrTS86KvwfA46MDSnyq7fcMw=="],
   }
 }

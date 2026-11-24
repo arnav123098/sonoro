@@ -2,9 +2,10 @@ import * as THREE from 'three';
 import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader.js";
 import { remapMixamoAnimationToVrm } from './remapMixamoAnimationToVrm';
 import { globals } from '$lib/index.svelte';
+import { VRMAnimationLoaderPlugin, createVRMAnimationClip } from '@pixiv/three-vrm-animation';
 
 export class Animator {
-    constructor(model, camera) {
+    constructor(model, camera, gltfLoader) {
         this.model = model;
         this.mixer = model.mixer;
         this.camera = camera;
@@ -50,6 +51,11 @@ export class Animator {
 
         this.onAnimationFinished = (e) => e.action === this.actions[this.currentAnimation] && e.action !== this.actions.walking && this.playAnimation('idle');
         this.mixer.addEventListener('finished', this.onAnimationFinished);
+
+        gltfLoader.register(parser =>
+            new VRMAnimationLoaderPlugin(parser)
+        );
+        this.gltfLoader = gltfLoader;
     }
 
     dispose() {
@@ -112,9 +118,23 @@ export class Animator {
 
     async loadAction(actionName) {
         const path = this.animationPaths[actionName];
-        const fbxLoader = new FBXLoader();
-        const fbx = await fbxLoader.loadAsync(path);
-        const clip = remapMixamoAnimationToVrm(this.model, fbx);
+        let clip;
+
+        if (path.endsWith('.fbx')) {
+            const fbxLoader = new FBXLoader();
+            const fbx = await fbxLoader.loadAsync(path);
+            clip = remapMixamoAnimationToVrm(this.model, fbx);
+
+        } else if (path.endsWith('.vrma')) {
+            const gltf = await this.gltfLoader.loadAsync(path);
+            const vrmAnimation = gltf.userData.vrmAnimations[0];
+            clip = createVRMAnimationClip(
+                vrmAnimation,
+                this.model
+            );
+
+        } else return;
+
         const action = this.mixer.clipAction(clip);
         
         if (actionName === 'walking') {
