@@ -30,7 +30,7 @@ Run bun install in app/webui (for now, the web ui runs on port 5173).
 From the project root, run the commands -
 ```
   cd app/webui
-  bun i # make sure you have bun installed
+  bun i
 ```
 
 ## Usage (in development mode)
@@ -62,6 +62,7 @@ As an example, I have Yinlin from Wuthering Waves in my sonoro.
 Sonoro is currently in early development. APIs, configuration, installation steps, and features may change frequently. Things might break.
 
 ## TODOS
+- [ ] facial expressions
 - [ ] more comprehensive music player (search, select and then play; downloads, playlists; follow artists)
 - [ ] better and simpler memory framework
 - [ ] improve persona
